@@ -264,19 +264,23 @@
             </div>
         </div>
 
-
         <!-- Modal Upload -->
-        <div class="modal fade" id="uploadModal" tabindex="-1">
+        <div class="modal fade" id="uploadModal" tabindex="-1" aria-labelledby="uploadModalLabel" aria-hidden="true">
             <div class="modal-dialog">
                 <form id="uploadForm" enctype="multipart/form-data">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h5 class="modal-title">Upload Excel</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            <h5 class="modal-title" id="uploadModalLabel">Upload Excel Karyawan</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
+
                         <div class="modal-body">
-                            <input type="file" name="excel_file" class="form-control" required accept=".xls,.xlsx">
+                            <div class="mb-3">
+                                <label for="file" class="form-label">Pilih File Excel</label>
+                                <input class="form-control" type="file" id="file" name="file" accept=".xlsx, .xls" required>
+                            </div>
                         </div>
+
                         <div class="modal-footer">
                             <button type="submit" class="btn btn-primary">Import</button>
                         </div>
@@ -284,6 +288,7 @@
                 </form>
             </div>
         </div>
+
 
     </div>
 </div>

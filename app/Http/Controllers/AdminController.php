@@ -39,7 +39,14 @@ class AdminController extends Controller
         if (!session('login') || !session('username')) {
             return redirect('/login');
         }
-        return view('admin.prd.plotting_karyawan');
+        // Ambil semua grup unik
+        $groups = Employee::select('grup')->distinct()->pluck('grup');
+
+        // Ambil semua karyawan
+        $employees = Employee::orderBy('grup')->orderBy('nama_karyawan')->get();
+
+        return view('admin.prd.plotting_karyawan', compact('groups', 'employees'));
+        
     }
 
 
@@ -162,7 +169,7 @@ class AdminController extends Controller
         $inserted = 0;
         foreach ($rows as $row) {
             $data = [
-                'user_id' => null,
+                //'user_id' => null,
                 'company' => $row[0],
                 'nik_bas' => $row[1],
                 'nama_vendor' => $row[2],
@@ -182,7 +189,7 @@ class AdminController extends Controller
                 'action_type' => $row[16],
                 'kode_level' => $row[17],
                 'kode_department' => $row[18],
-                'grup' => $row[19],
+                'grup' => strtoupper($row[19]),
                 'kode_bagian' => $row[20],
                 'kode_jabatan' => $row[21],
                 'begin_date' => $this->convertExcelDate($row[22]),

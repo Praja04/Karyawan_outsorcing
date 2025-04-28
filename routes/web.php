@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\ScheduleController;
 
 // Auth
 Route::get('/', [AuthController::class, 'showLogin']);
@@ -24,10 +25,17 @@ Route::prefix('admin')->group(function () {
     Route::delete('/employees/{id}', [AdminController::class, 'destroy']);
     Route::post('/employees/import', [AdminController::class, 'import'])->name('employees.import');
 });
- 
+
 // Route hanya untuk karyawan
 Route::prefix('karyawan')->group(function () {
     Route::get('/karyawan-only', fn () => 'Halaman khusus karyawan');
     // bisa buat route untuk karyawan melihat daftar hadirnya
 });
 
+
+Route::prefix('schedule')->group(function () {
+    Route::get('/', [ScheduleController::class, 'index'])->name('schedule.index');
+    Route::post('/store', [ScheduleController::class, 'store'])->name('schedule.store');
+    Route::delete('/destroy', [ScheduleController::class, 'destroy'])->name('schedule.destroy');
+    Route::get('/view', [ScheduleController::class, 'view'])->name('schedule.view');
+});
