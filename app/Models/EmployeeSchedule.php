@@ -10,8 +10,7 @@ class EmployeeSchedule extends Model
     use HasFactory;
 
     protected $fillable = [
-        'employee_id', 'week', 'status_hadir', 'month',
-        'year',
+        'employee_id', 'status_hadir', 'start_date', 'end_date',
         'group'
     ];
 
@@ -19,4 +18,5 @@ class EmployeeSchedule extends Model
     {
         return $this->belongsTo(Employee::class);
     }
+    
 }

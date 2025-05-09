@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Employee;
+use App\Models\EmployeeSchedule;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use Illuminate\Support\Facades\Validator;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
@@ -37,15 +38,16 @@ class AdminController extends Controller
     {
         // cek apakah user punya session login true dan session username
         if (!session('login') || !session('username')) {
-            return redirect('/login');
+            return redirect('/');
         }
         // Ambil semua grup unik
         $groups = Employee::select('grup')->distinct()->pluck('grup');
 
         // Ambil semua karyawan
         $employees = Employee::orderBy('grup')->orderBy('nama_karyawan')->get();
+        $schedules = EmployeeSchedule::with('employee')->orderBy('start_date', 'desc')->get();
 
-        return view('admin.prd.plotting_karyawan', compact('groups', 'employees'));
+        return view('admin.prd.plotting_karyawan', compact('groups', 'employees','schedules'));
         
     }
 

@@ -13,15 +13,29 @@ class UserSeeder extends Seeder
     public function run(): void
     {
         //
+        // \App\Models\User::create([
+        //     'name' => 'Admin',
+        //     'email' => 'admin@example.com',
+        //     'password' => bcrypt('password'),
+        //     'role' => 'admin'
+        // ]);
+
         \App\Models\User::create([
-            'name' => 'Admin',
-            'email' => 'admin@example.com',
+            'name' => 'Supervisor',
+            'email' => 'supervisor@example.com',
             'password' => bcrypt('password'),
-            'role' => 'admin'
+            'role' => 'supervisor'
         ]);
 
-        \App\Models\User::factory(10)->create([
-            'role' => 'karyawan'
+        \App\Models\User::create([
+            'name' => 'Foreman',
+            'email' => 'foreman@example.com',
+            'password' => bcrypt('password'),
+            'role' => 'foreman'
         ]);
+
+        // \App\Models\User::factory(10)->create([
+        //     'role' => 'karyawan'
+        // ]);
     }
 }

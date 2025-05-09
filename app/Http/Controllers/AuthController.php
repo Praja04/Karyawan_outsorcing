@@ -12,38 +12,92 @@ class AuthController extends Controller
         return view('auth.login');
     }
 
+    // public function login(Request $request)
+    // {
+    //     $credentials = $request->only('email', 'password');
+
+    //     if (Auth::attempt($credentials)) {
+    //         $request->session()->regenerate();
+    //         // put session username
+    //         $request->session()->put('username', Auth::user()->name);
+    //         // put session login true
+    //         $request->session()->put('login', true);
+    //         // put session role
+    //         $request->session()->put('role', Auth::user()->role);
+    //         $role = auth()->user()->role;
+    //         $redirect = match ($role) {
+    //             'admin' => url('admin/dashboard'),
+    //             'karyawan' => url('karyawan/karyawan-only'),
+    //             default => url('/dashboard')
+    //         };
+
+    //         if ($request->ajax()) {
+    //             return response()->json(['success' => true, 'redirect' => $redirect]);
+    //         }
+
+    //         return redirect($redirect);
+    //     }
+
+    //     if ($request->ajax()) {
+    //         return response()->json(['message' => 'Email atau password salah.'], 401);
+    //     }
+
+    //     return back()->withErrors(['email' => 'Email atau password salah.']);
+    // }
+
     public function login(Request $request)
     {
         $credentials = $request->only('email', 'password');
 
         if (Auth::attempt($credentials)) {
-            $request->session()->regenerate();
-            // put session username
-            $request->session()->put('username', Auth::user()->name);
-            // put session login true
-            $request->session()->put('login', true);
-            // put session role
-            $request->session()->put('role', Auth::user()->role);
-            $role = auth()->user()->role;
-            $redirect = match ($role) {
-                'admin' => url('admin/dashboard'),
-                'karyawan' => url('karyawan/karyawan-only'),
-                default => url('/dashboard')
-            };
+            $user = Auth::user();
 
-            if ($request->ajax()) {
-                return response()->json(['success' => true, 'redirect' => $redirect]);
+            session([
+                'user_id' => $user->id,
+                'username' => $user->name,
+                'login' => true,
+                'user_role' => $user->role,
+            ]);
+
+            // Tentukan URL redirect
+            switch ($user->role) {
+                case 'admin':
+                    $redirectUrl = url('admin/dashboard');
+                    break;
+                case 'supervisor':
+                    $redirectUrl = url('supervisor/dashboard');
+                    break;
+                case 'foreman':
+                    $redirectUrl = url('foreman/dashboard');
+                    break;
+                default:
+                    Auth::logout();
+                    return response()->json(['message' => 'Role tidak dikenali.'], 403);
             }
 
-            return redirect($redirect);
+            // Jika permintaan AJAX
+            if ($request->ajax()) {
+                return response()->json([
+                    'message' => 'Login berhasil!',
+                    'redirect' => $redirectUrl
+                ]);
+            }
+
+            // Jika permintaan biasa
+            return redirect($redirectUrl);
         }
 
+        // Gagal login
         if ($request->ajax()) {
-            return response()->json(['message' => 'Email atau password salah.'], 401);
+            return response()->json([
+                'message' => 'Email atau password salah.'
+            ], 401); // 401 = Unauthorized
         }
 
-        return back()->withErrors(['email' => 'Email atau password salah.']);
+        return back()->with('error', 'Email atau password salah.');
     }
+
+
 
 
     public function logout(Request $request)

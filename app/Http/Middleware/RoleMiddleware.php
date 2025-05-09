@@ -1,23 +1,19 @@
 <?php
+// app/Http/Middleware/RoleMiddleware.php
 
 namespace App\Http\Middleware;
 
 use Closure;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+
 class RoleMiddleware
 {
-    public function handle(Request $request, Closure $next, ...$roles)
+    public function handle($request, Closure $next, $role)
     {
-        if (!auth()->check()) {
-            return redirect('/login');
+        if (Auth::check() && Auth::user()->role === $role) {
+            return $next($request);
         }
 
-        if (!in_array(auth()->user()->role, $roles)) {
-            abort(403, 'Akses ditolak.');
-        }
-
-        return $next($request);
+        return redirect('/login')->with('error', 'Akses ditolak.');
     }
 }
-

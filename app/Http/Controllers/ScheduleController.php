@@ -80,30 +80,121 @@ class ScheduleController extends Controller
     //     return redirect()->back()->with('success', 'Jadwal berhasil disimpan!');
     // }
 
+    // public function store(Request $request)
+    // {
+    //     $request->validate([
+    //         'week' => 'required|integer',
+    //         'month' => 'required|integer',
+    //         'year' => 'required|integer',
+    //         'employee_ids' => 'required|array',
+    //     ]);
+
+    //     $week = $request->input('week');
+    //     $month = $request->input('month');
+    //     $year = $request->input('year');
+    //     $employeeIds = $request->input('employee_ids');
+
+    //     foreach ($employeeIds as $employeeId) {
+    //         $employee = Employee::find($employeeId);
+
+    //         if ($employee) {
+    //             EmployeeSchedule::updateOrCreate(
+    //                 [
+    //                     'employee_id' => $employeeId,
+    //                     'week' => $week,
+    //                     'month' => $month,
+    //                     'year' => $year,
+    //                 ],
+    //                 [
+    //                     'group' => $employee->grup,
+    //                     'status_hadir' => true,
+    //                 ]
+    //             );
+    //         }
+    //     }
+
+    //     return response()->json([
+    //         'status' => 'success',
+    //         'message' => "data berhasil disimpan."
+    //     ]);
+    // }
+
+    // public function store(Request $request)
+    // {
+    //     $request->validate([
+    //         'start_date' => 'required|date',
+    //         'end_date' => 'required|date|after_or_equal:start_date',
+    //         'employee_ids' => 'required|array',
+    //     ]);
+
+    //     $startDate = $request->input('start_date');
+    //     $endDate = $request->input('end_date');
+    //     $employeeIds = $request->input('employee_ids');
+
+    //     foreach ($employeeIds as $employeeId) {
+    //         $employee = Employee::find($employeeId);
+
+    //         if ($employee) {
+    //             EmployeeSchedule::updateOrCreate(
+    //                 [
+    //                     'employee_id' => $employeeId,
+    //                     'start_date' => $startDate,
+    //                     'end_date' => $endDate,
+    //                 ],
+    //                 [
+    //                     'group' => $employee->grup,
+    //                     'status_hadir' => true,
+    //                 ]
+    //             );
+    //         }
+    //     }
+
+    //     return response()->json([
+    //         'status' => 'success',
+    //         'message' => "Data berhasil disimpan untuk tanggal $startDate sampai $endDate."
+    //     ]);
+    // }
     public function store(Request $request)
     {
         $request->validate([
-            'week' => 'required|integer',
-            'month' => 'required|integer',
-            'year' => 'required|integer',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after_or_equal:start_date',
             'employee_ids' => 'required|array',
         ]);
 
-        $week = $request->input('week');
-        $month = $request->input('month');
-        $year = $request->input('year');
+        $startDate = $request->input('start_date');
+        $endDate = $request->input('end_date');
         $employeeIds = $request->input('employee_ids');
 
-        foreach ($employeeIds as $employeeId) {
-            $employee = Employee::find($employeeId);
+        $conflicts = [];
 
+        foreach ($employeeIds as $employeeId) {
+            // Cek apakah sudah ada jadwal yang bentrok
+            $hasConflict = EmployeeSchedule::where('employee_id', $employeeId)
+                ->where(function ($query) use ($startDate, $endDate) {
+                    $query->whereBetween('start_date', [$startDate, $endDate])
+                        ->orWhereBetween('end_date', [$startDate, $endDate])
+                        ->orWhere(function ($query) use ($startDate, $endDate) {
+                            $query->where('start_date', '<=', $startDate)
+                                ->where('end_date', '>=', $endDate);
+                        });
+                })
+                ->exists();
+
+            if ($hasConflict) {
+                $employee = Employee::find($employeeId);
+                $conflicts[] = $employee ? $employee->nama_karyawan : "ID: $employeeId";
+                continue; // Lewati penyimpanan untuk yang konflik
+            }
+
+            // Jika tidak bentrok, simpan/update data
+            $employee = Employee::find($employeeId);
             if ($employee) {
                 EmployeeSchedule::updateOrCreate(
                     [
                         'employee_id' => $employeeId,
-                        'week' => $week,
-                        'month' => $month,
-                        'year' => $year,
+                        'start_date' => $startDate,
+                        'end_date' => $endDate,
                     ],
                     [
                         'group' => $employee->grup,
@@ -113,12 +204,18 @@ class ScheduleController extends Controller
             }
         }
 
+        if (!empty($conflicts)) {
+            return response()->json([
+                'status' => 'warning',
+                'message' => 'Beberapa karyawan sudah memiliki jadwal pada tanggal tersebut: ' . implode(', ', $conflicts),
+            ]);
+        }
+
         return response()->json([
             'status' => 'success',
-            'message' => "data berhasil disimpan."
+            'message' => "Data berhasil disimpan untuk tanggal $startDate sampai $endDate."
         ]);
     }
-
 
 
     /**
@@ -137,4 +234,17 @@ class ScheduleController extends Controller
 
         return redirect()->back()->with('success', 'Jadwal berhasil dihapus!');
     }
+
+    public function checkSchedule(Request $request)
+    {
+        $start = $request->start_date;
+        $end = $request->end_date;
+
+        $employeeIds = EmployeeSchedule::where('start_date', $start)
+            ->where('end_date', $end)
+            ->pluck('employee_id');
+
+        return response()->json($employeeIds);
+    }
+
 }

@@ -14,9 +14,8 @@ return new class extends Migration
         Schema::create('employee_schedules', function (Blueprint $table) {
             $table->id();
             $table->foreignId('employee_id')->constrained()->onDelete('cascade');
-            $table->integer('week'); // Minggu ke berapa
-            $table->integer('month');
-            $table->integer('year');
+            $table->date('start_date'); // Minggu ke berapa
+            $table->date('end_date');
             $table->string('group')->nullable();
             $table->boolean('status_hadir')->default(true); // true = masuk, false = tidak masuk
             $table->timestamps();

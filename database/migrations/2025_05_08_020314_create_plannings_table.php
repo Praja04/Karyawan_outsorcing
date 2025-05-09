@@ -11,12 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('weeks', function (Blueprint $table) {
+        Schema::create('plannings', function (Blueprint $table) {
             $table->id();
-            $table->integer('week_number');
             $table->date('start_date');
             $table->date('end_date');
+            $table->string('group');
+            $table->integer('jumlah_karyawan');
+            $table->unsignedBigInteger('created_by'); // supervisor_id
             $table->timestamps();
+
+           // $table->foreign('created_by')->references('id')->on('users')->onDelete('cascade');
         });
     }
 
@@ -25,6 +29,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('weeks');
+        Schema::dropIfExists('plannings');
     }
 };
