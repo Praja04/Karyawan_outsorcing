@@ -7,43 +7,73 @@
         <p>Rentang Tanggal: {{ $planning->start_date }} - {{ $planning->end_date }}</p>
         <p>Jumlah dibutuhkan: {{ $planning->jumlah_karyawan }}</p>
 
-        <form action="{{ route('foreman.plotting.store') }}" method="POST">
-            @csrf
-            <input type="hidden" name="planning_id" value="{{ $planning->id }}">
 
-            <div class="table-responsive">
-                <table class="table table-bordered">
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Nama Karyawan</th>
-                            <th>NIK OS</th>
-                            <th>Pilih Karyawan</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($employees as $emp)
-                        <tr>
-                            <td>{{ $loop->iteration }}</td>
-                            <td>{{ $emp->nama_karyawan }}</td>
-                            <td>{{ $emp->nik_os }}</td>
-                            <td>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" name="employee_ids[]" value="{{ $emp->id }}" id="emp{{ $emp->id }}" @if(in_array($emp->id, $plottingEmployeeIds)) disabled @endif>
-                                    <label class="form-check-label" for="emp{{ $emp->id }}"></label>
-                                </div>
-                            </td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
+        <div class="row">
+
+            <div class="col-lg-12 mb-12">
+                <div class="card">
+                    <div class="card-header d-flex align-items-center">
+                        <h5 class="card-title mb-0 flex-grow-1">Group: </h5>
+                        <span class="badge bg-primary selected-count">0</span>
+                    </div>
+
+                    <div class="card-body">
+                        {{-- Form per group --}}
+                        <form id="plottingForm" class="schedule-form">
+                            @csrf
+
+                            <input type="hidden" name="planning_id" value="{{ $planning->id }}">
+
+                            {{-- Table Karyawan --}}
+                            <div class="mb-2">
+                                <input type="text" class="form-control table-search" placeholder="Cari karyawan...">
+                            </div><br>
+                            <div class="table-responsive table-card mb-4" style="max-height: 200px; overflow-y: auto;">
+                                <table class="table align-middle table-nowrap mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 40px;">
+                                                <div class="form-check">
+                                                    <input class="form-check-input checkAll" type="checkbox">
+                                                </div>
+                                            </th>
+                                            <th>NIK OS</th>
+                                            <th>Nama</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="list form-check-all">
+                                        @foreach($employees as $emp)
+                                        <tr>
+                                            <td>
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" name="employee_ids[]" value="{{ $emp->id }}" id="emp{{ $emp->id }}" @if(in_array($emp->id, $plottingEmployeeIds)) disabled @endif>
+                                                    <label class="form-check-label" for="emp{{ $emp->id }}"></label>
+                                                </div>
+                                            </td>
+                                            <td>{{ $emp->nik_os }}</td>
+                                            <td>{{ $emp->nama_karyawan }}</td>
+
+                                        </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            {{-- Tombol Simpan --}}
+                            <div class="mt-3">
+                                <button type="submit" class="btn btn-success">Simpan Plotting</button>
+                                <a href="{{ route('foreman.dashboard') }}" class="btn btn-secondary">Kembali</a>
+                            </div>
+
+                        </form>
+                    </div>
+                </div>
             </div>
 
-            <div class="mt-3">
-                <button type="submit" class="btn btn-success">Simpan Plotting</button>
-                <a href="{{ route('foreman.dashboard') }}" class="btn btn-secondary">Kembali</a>
-            </div>
-        </form>
+
+        </div>
+
+
 
 
         @if($planning->plottingKehadiran->count() > 0)
@@ -103,17 +133,81 @@
             e.preventDefault();
             const formData = $(this).serialize();
 
+            // Tampilkan loading SweetAlert
+            Swal.fire({
+                title: 'Menyimpan...',
+                text: 'Harap tunggu sebentar.',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
             $.ajax({
-                url: $(this).attr('action'),
+                url: "{{ route('foreman.plotting.store') }}",
                 method: 'POST',
                 data: formData,
                 success: function(res) {
-                    alert('Plotting berhasil disimpan!');
-                    window.location.href = "{{ route('foreman.dashboard') }}";
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Berhasil!',
+                        text: res.message || 'Plotting berhasil disimpan.',
+                        timer: 2000,
+                        showConfirmButton: false
+                    }).then(() => {
+                        location.reload();
+                    });
                 },
                 error: function(xhr) {
-                    alert('Gagal menyimpan plotting:\n' + (xhr.responseJSON.message || 'Unknown error'));
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Gagal menyimpan',
+                        text: xhr.responseJSON?.message || 'Terjadi kesalahan. Coba lagi nanti.'
+                    });
                 }
+            });
+        });
+
+
+        // Fungsi: update jumlah terpilih & sorting checkbox yang dicentang ke atas
+        function refreshFormState(form) {
+            let tbody = form.find('tbody');
+            let checkedCount = tbody.find('input[type="checkbox"]:checked').length;
+            form.closest('.card').find('.selected-count').text(checkedCount);
+
+            // Sorting
+            let rows = tbody.find('tr').get();
+            rows.sort(function(a, b) {
+                let aChecked = $(a).find('input[type="checkbox"]').prop('checked');
+                let bChecked = $(b).find('input[type="checkbox"]').prop('checked');
+                return (aChecked === bChecked) ? 0 : aChecked ? -1 : 1;
+            });
+            $.each(rows, function(_, row) {
+                tbody.append(row);
+            });
+        }
+
+        // Checkbox individual berubah
+        $(document).on('change', '.schedule-form input[type="checkbox"]', function() {
+            let form = $(this).closest('.schedule-form');
+            refreshFormState(form);
+        });
+
+        // Tombol Check All diklik
+        $(document).on('click', '.checkAll', function() {
+            let form = $(this).closest('.schedule-form');
+            let checkAll = $(this).prop('checked');
+            form.find('tbody input[type="checkbox"]:not(:disabled)').prop('checked', checkAll);
+            refreshFormState(form);
+        });
+
+        // Fitur pencarian per tabel
+        $(document).on('input', '.table-search', function() {
+            let searchVal = $(this).val().toLowerCase();
+            let rows = $(this).closest('form').find('table tbody tr');
+            rows.each(function() {
+                let rowText = $(this).text().toLowerCase();
+                $(this).toggle(rowText.includes(searchVal));
             });
         });
     });
@@ -122,22 +216,44 @@
         e.preventDefault();
         const id = $(this).data('id');
 
-        if (confirm('Yakin ingin menghapus plotting ini?')) {
-            $.ajax({
-                url: '/foreman/plotting/' + id,
-                type: 'DELETE',
-                data: {
-                    _token: '{{ csrf_token() }}'
-                },
-                success: function(res) {
-                    $('#row-' + id).remove();
-                    alert('Plotting berhasil dihapus.');
-                },
-                error: function(err) {
-                    alert('Gagal menghapus data.');
-                }
-            });
-        }
+        Swal.fire({
+            title: 'Yakin ingin menghapus?',
+            text: "Data plotting ini akan dihapus permanen.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#e3342f',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Ya, hapus!',
+            cancelButtonText: 'Batal'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: "{{url('/foreman/plotting')}}" + '/' + id,
+                    type: 'DELETE',
+                    data: {
+                        _token: '{{ csrf_token() }}'
+                    },
+                    success: function(res) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Berhasil',
+                            text: 'Plotting berhasil dihapus.',
+                            timer: 1500,
+                            showConfirmButton: false
+                        }).then(() => {
+                            location.reload();
+                        });
+                    },
+                    error: function(err) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Gagal',
+                            text: 'Gagal menghapus data.',
+                        });
+                    }
+                });
+            }
+        });
     });
 </script>
 

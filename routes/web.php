@@ -63,3 +63,4 @@ Route::prefix('schedule')->group(function () {
     Route::get('/view', [ScheduleController::class, 'view'])->name('schedule.view');
     Route::get('/check-schedule', [ScheduleController::class, 'checkSchedule']);
 });
+
