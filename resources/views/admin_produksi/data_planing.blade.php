@@ -3,7 +3,42 @@
 @section('content')
 <div class="page-content">
     <div class="container-fluid">
-        <h2 class="mb-4">Dashboard Supervisor</h2>
+        <div class="row">
+            <div class="col-xxl-12">
+                <div class="d-flex flex-column h-100">
+                    <div class="row h-100">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-body p-0">
+
+
+                                    <div class="row align-items-end">
+                                        <div class="col-sm-10">
+                                            <div class="p-3">
+                                                <h1>Planning Karyawan Outsorcing </h1>
+                                                <div class="mt-3">
+                                                    <p class="fs-16 lh-base">
+                                                        Kelola karyawan anda!
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-2">
+                                            <div class="px-3">
+                                                <img src="{{asset('/material/assets/images/user-illustarator-2.png')}}" class="img-fluid" alt="">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div> <!-- end card-body-->
+                            </div>
+                        </div> <!-- end col-->
+                    </div> <!-- end row-->
+
+                </div>
+            </div> <!-- end col-->
+
+
+        </div>
 
         @if (session('success'))
         <div class="alert alert-success">{{ session('success') }}</div>
@@ -14,10 +49,10 @@
                 <div class="card" id="ticketsList">
                     <div class="card-header border-0">
                         <div class="d-flex align-items-center">
-                            <h5 class="card-title mb-0 flex-grow-1">Planning</h5>
+                            <h5 class="card-title mb-0 flex-grow-1">Data Planning</h5>
                             <div class="flex-shrink-0">
                                 <div class="d-flex flex-wrap gap-2">
-                                    <a href="{{ route('supervisor.planning.create') }}" class="btn btn-primary mb-3">+ Buat Planning Baru</a>
+                                    <a href="{{ route('admin_produksi.planning.create') }}" class="btn btn-primary mb-3">+ Buat Planning Baru</a>
                                 </div>
                             </div>
                         </div>
@@ -44,7 +79,10 @@
                                     <tr>
                                         <th>No</th>
                                         <th>Group</th>
+                                        <th>Bagian</th>
+                                        <th>Jabatan</th>
                                         <th>Jumlah Karyawan</th>
+                                        <th>Shift</th>
                                         <th>Tanggal Mulai</th>
                                         <th>Tanggal Selesai</th>
                                         <th>Status</th>
@@ -56,7 +94,10 @@
                                     <tr>
                                         <td>{{ $loop->iteration }}</td>
                                         <td>{{ $plan->group }}</td>
+                                        <td>{{ $plan->kode_bagian }}</td>
+                                        <td>{{ $plan->kode_jabatan }}</td>
                                         <td>{{ $plan->jumlah_karyawan }}</td>
+                                        <td>{{ $plan->shift }}</td>
                                         <td>{{ \Carbon\Carbon::parse($plan->start_date)->format('d M Y') }}</td>
                                         <td>{{ \Carbon\Carbon::parse($plan->end_date)->format('d M Y') }}</td>
                                         <td>
@@ -67,7 +108,7 @@
                                             @endif
                                         </td>
                                         <td>
-                                            <a href="{{ route('supervisor.plotting.show', $plan->id) }}" class="btn btn-info btn-sm">
+                                            <a href="{{ route('admin_produksi.plotting.show', $plan->id) }}" class="btn btn-info btn-sm">
                                                 View
                                             </a>
                                             <button class="btn btn-warning btn-sm edit-btn" data-id="{{ $plan->id }}" data-start_date="{{ $plan->start_date }}" data-end_date="{{ $plan->end_date }}" data-group="{{ $plan->group }}" data-jumlah="{{ $plan->jumlah_karyawan }}">

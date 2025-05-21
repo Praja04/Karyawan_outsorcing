@@ -11,7 +11,7 @@ class Planning extends Model
     use HasFactory;
 
     protected $fillable = [
-        'start_date', 'end_date', 'group', 'jumlah_karyawan', 'created_by'
+        'start_date', 'end_date','shift', 'group', 'jumlah_karyawan', 'created_by', 'kode_bagian', 'kode_jabatan'
     ];
 
     public function plottingKehadiran()

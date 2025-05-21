@@ -4,18 +4,48 @@
 <div class="page-content">
     <div class="container-fluid">
         <div class="row">
+            <div class="col-xxl-12">
+                <div class="d-flex flex-column h-100">
+                    <div class="row h-100">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-body p-0">
+
+
+                                    <div class="row align-items-end">
+                                        <div class="col-sm-10">
+                                            <div class="p-3">
+                                                <h1>Planning Karyawan Outsorcing </h1>
+                                                <div class="mt-3">
+                                                    <p class="fs-16 lh-base">
+                                                        Kelola karyawan anda!
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-2">
+                                            <div class="px-3">
+                                                <img src="{{asset('/material/assets/images/user-illustarator-2.png')}}" class="img-fluid" alt="">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div> <!-- end card-body-->
+                            </div>
+                        </div> <!-- end col-->
+                    </div> <!-- end row-->
+
+                </div>
+            </div> <!-- end col-->
+
+
+        </div>
+        <div class="row">
             <div class="col-lg-12">
                 <div class="card" id="ticketsList">
                     <div class="card-header border-0">
                         <div class="d-flex align-items-center">
-                            <h5 class="card-title mb-0 flex-grow-1">Plotting Kehadiran - Group: {{ $planning->group }}</h5>
-                            <p class="card-title mb-0 flex-grow-1">Periode: {{ \Carbon\Carbon::parse($planning->start_date)->format('d M Y') }} - {{ \Carbon\Carbon::parse($planning->end_date)->format('d M Y') }}</p>
+                            <h5 class="card-title mb-0 flex-grow-1">Daftar Planning dari Supervisor</h5>
 
-                            <div class="flex-shrink-0">
-                                <div class="d-flex flex-wrap gap-2">
-                                    <a href="{{ route('supervisor.dashboard') }}" class="btn btn-secondary">Kembali</a>
-                                </div>
-                            </div>
                         </div>
                     </div>
                     <div class="card-body border border-dashed border-end-0 border-start-0">
@@ -39,36 +69,33 @@
                                 <thead>
                                     <tr>
                                         <th>No</th>
-                                        <th>Nama Karyawan</th>
-                                        <th>NIK OS</th>
-                                        <th>Tanggal Diinfokan</th>
-                                        <th>Status Konfirmasi</th>
+                                        <th>Group</th>
+                                        <th>Kode Bagian</th>
+                                        <th>Kode Jabatan</th>
+                                        <th>Shift</th>
+                                        <th>Rentang Tanggal</th>
+                                        <th>Jumlah Dibutuhkan</th>
+                                        <th>Aksi</th>
                                     </tr>
                                 </thead>
                                 <tbody class="list form-check-all" id="ticket-list-data">
-                                    @forelse ($planning->plottingKehadiran as $index => $plot)
+                                    @foreach($plannings as $plan)
                                     <tr>
-                                        <td>{{ $index + 1 }}</td> <!-- Kolom No -->
-                                        <td class="nama-karyawan">{{ $plot->employee->nama_karyawan }}</td>
-                                        <td class="nik-os">{{ $plot->employee->nik_os }}</td>
-                                        <td class="tanggal">{{ $plot->tanggal }}</td>
-                                        <td class="status-konfirmasi">
-                                            @if ($plot->status_konfirmasi === 'hadir')
-                                            <span class="badge bg-success">Hadir</span>
-                                            @elseif ($plot->status_konfirmasi === 'tidak')
-                                            <span class="badge bg-danger">Tidak Hadir</span>
-                                            @else
-                                            <span class="badge bg-secondary">Belum Konfirmasi</span>
-                                            @endif
+                                        <td>{{ $loop->iteration }}</td>
+                                        <td>{{ $plan->group }}</td>
+                                        <td>{{ $plan->kode_bagian }}</td>
+                                        <td>{{ $plan->kode_jabatan }}</td>
+                                        <td>Shift {{ $plan->shift }}</td>
+                                        <td>{{ $plan->start_date }} - {{ $plan->end_date }}</td>
+                                        <td>{{ $plan->jumlah_karyawan }}</td>
+                                        <td>
+                                            <a href="{{ route('foreman.plotting.view', $plan->id) }}" class="btn btn-primary btn-sm">
+                                                Pilih Karyawan
+                                            </a>
                                         </td>
                                     </tr>
-                                    @empty
-                                    <tr>
-                                        <td colspan="5" class="text-center">Belum ada plotting.</td>
-                                    </tr>
-                                    @endforelse
+                                    @endforeach
                                 </tbody>
-
                             </table>
                             <div class="noresult" style="display: none">
                                 <div class="text-center">
@@ -119,8 +146,12 @@
             </div>
             <!--end col-->
         </div>
+
+
     </div>
 </div>
+
+
 <script>
     $(document).ready(function() {
         $('.search').on('keyup', function() {

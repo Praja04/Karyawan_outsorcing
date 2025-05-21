@@ -11,28 +11,48 @@ class SupervisorController extends Controller
 {
     public function dashboard()
     {
-        if (Auth::user()->role !== 'supervisor') {
+        if (Auth::user()->role !== 'admin_produksi') {
+            abort(403, 'Akses ditolak');
+        }
+
+        return view('admin_produksi.dashboard');
+    }
+    public function data_planing()
+    {
+        if (Auth::user()->role !== 'admin_produksi') {
             abort(403, 'Akses ditolak');
         }
 
         $plannings = Planning::orderBy('start_date', 'desc')->get();
         $groups = Employee::select('grup')
-            ->whereNotNull('grup')
-            ->distinct()
+        ->whereNotNull('grup')
+        ->distinct()
             ->pluck('grup');
 
-        return view('supervisor.dashboard', compact('plannings', 'groups'));
+        return view('admin_produksi.data_planing', compact('plannings', 'groups'));
     }
 
     public function createPlanning()
     {
-        // Ambil semua group unik dari tabel employees
         $groups = Employee::select('grup')
-            ->whereNotNull('grup')
-            ->distinct()
+        ->whereNotNull('grup')
+        ->distinct()
             ->pluck('grup');
 
-        return view('supervisor.create_planning', compact('groups'));
+        $kodeBagians = Employee::select('kode_bagian')
+        ->whereNotNull('kode_bagian')
+        ->distinct()
+            ->pluck('kode_bagian');
+
+        $kodeJabatans = Employee::select('kode_jabatan')
+        ->whereNotNull('kode_jabatan')
+        ->distinct()
+            ->pluck('kode_jabatan');
+
+        // Shift bisa tetap fixed: misalnya Shift 1, 2, 3
+        $shifts = ['1', '2', '3'];
+
+        return view('admin_produksi.create_planning', compact('groups', 'kodeBagians', 'kodeJabatans', 'shifts'));
     }
 
     public function store(Request $request)
@@ -40,12 +60,18 @@ class SupervisorController extends Controller
         $request->validate([
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date',
+            'shift' => 'required',
             'group' => 'required',
             'jumlah_karyawan' => 'required|integer|min:1',
+            'kode_bagian' => 'required|string',
+            'kode_jabatan' => 'required|string',
         ]);
 
-        // Cek duplikat rentang tanggal dan group
-        $existing = Planning::where('group', $request->group)
+        // Cek konflik: dalam 1 group + kode_bagian + kode_jabatan + shift, tidak boleh overlap tanggal
+        $conflict = Planning::where('group', $request->group)
+            ->where('kode_bagian', $request->kode_bagian)
+            ->where('kode_jabatan', $request->kode_jabatan)
+            ->where('shift', $request->shift)
             ->where(function ($query) use ($request) {
                 $query->whereBetween('start_date', [$request->start_date, $request->end_date])
                     ->orWhereBetween('end_date', [$request->start_date, $request->end_date])
@@ -56,20 +82,24 @@ class SupervisorController extends Controller
             })
             ->exists();
 
-        if ($existing) {
-            return back()->withErrors(['Planning untuk group ini dan rentang tanggal tersebut sudah ada.'])->withInput();
+        if ($conflict) {
+            return back()->withErrors([
+                'Planning sudah ada untuk kombinasi Group, Kode Bagian, Kode Jabatan, dan Shift di tanggal tersebut.'
+            ])->withInput();
         }
 
-        // Simpan
         Planning::create([
             'start_date' => $request->start_date,
             'end_date' => $request->end_date,
+            'shift' => $request->shift,
             'group' => $request->group,
             'jumlah_karyawan' => $request->jumlah_karyawan,
+            'kode_bagian' => $request->kode_bagian,
+            'kode_jabatan' => $request->kode_jabatan,
             'created_by' => Auth::id(),
         ]);
 
-        return redirect()->route('supervisor.dashboard')->with('success', 'Planning berhasil disimpan.');
+        return redirect()->route('admin_produksi.data_planing')->with('success', 'Planning berhasil disimpan.');
     }
 
     public function update(Request $request, $id)
@@ -77,6 +107,7 @@ class SupervisorController extends Controller
         $request->validate([
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date',
+            'shift' => 'required',
             'group' => 'required',
             'jumlah_karyawan' => 'required|integer|min:1',
         ]);
@@ -111,7 +142,7 @@ class SupervisorController extends Controller
     {
         $planning = Planning::with('plottingKehadiran.employee')->findOrFail($id);
 
-        return view('supervisor.plotting_view', compact('planning'));
+        return view('admin_produksi.plotting_view', compact('planning'));
     }
 
 }

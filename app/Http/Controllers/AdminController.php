@@ -8,6 +8,8 @@ use App\Models\EmployeeSchedule;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use Illuminate\Support\Facades\Validator;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Response;
 
 
 
@@ -30,7 +32,7 @@ class AdminController extends Controller
         if (!session('login') || !session('username')) {
             return redirect('/login');
         }
-        return view('admin.prd.index');
+        return view('admin.hrd.index');
     }
 
     //plotting karyawan Prd
@@ -47,7 +49,7 @@ class AdminController extends Controller
         $employees = Employee::orderBy('grup')->orderBy('nama_karyawan')->get();
         $schedules = EmployeeSchedule::with('employee')->orderBy('start_date', 'desc')->get();
 
-        return view('admin.prd.plotting_karyawan', compact('groups', 'employees','schedules'));
+        return view('admin.hrd.plotting_karyawan', compact('groups', 'employees','schedules'));
         
     }
 
@@ -235,4 +237,91 @@ class AdminController extends Controller
         }
     }
 
+    public function downloadTemplateUploadData()
+    {
+        $path = 'templates/template_upload_data_karyawan.xlsx'; // Tanpa 'public/' prefix
+       
+        $fullPath = storage_path('app/public/' . $path);
+
+        if (!file_exists($fullPath)) {
+            abort(404, 'Template file not found.');
+        }
+
+        return response()->download($fullPath, 'template_upload_data_karyawan.xlsx');
+    }
+    public function downloadTemplateUpdateWa()
+    {
+        $path = 'templates/template_update_nomor_wa.xlsx'; // Tanpa 'public/' prefix
+
+        $fullPath = storage_path('app/public/' . $path);
+
+        if (!file_exists($fullPath)) {
+            abort(404, 'Template file not found.');
+        }
+
+        return response()->download($fullPath, 'template_update_nomor_wa.xlsx');
+    }
+
+    public function uploadNomorWaExcel(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:xlsx,xls'
+        ]);
+
+        try {
+            $spreadsheet = IOFactory::load($request->file('file'));
+            $sheet = $spreadsheet->getActiveSheet();
+            $rows = $sheet->toArray();
+
+            // Lewati header (baris 0)
+            unset($rows[0]);
+
+            $updated = 0;
+            $errors = [];
+
+            foreach ($rows as $index => $row) {
+                $nomorKtp = trim($row[0] ?? '');
+                $nomorHp = trim($row[1] ?? '');
+
+                if (!$nomorKtp || !$nomorHp) {
+                    $errors[] = "Baris ke-" . ($index + 2) . " kosong.";
+                    continue;
+                }
+
+                // Normalisasi nomor HP: ubah awalan 0 jadi 62 dan buang karakter non-digit
+                $nomorHp = preg_replace('/^0/', '62', preg_replace('/\D/', '', $nomorHp));
+
+                if (!preg_match('/^\d{16}$/', $nomorKtp)) {
+                    $errors[] = "Baris ke-" . ($index + 2) . ": Nomor KTP tidak valid.";
+                    continue;
+                }
+
+                if (!preg_match('/^62\d{9,13}$/', $nomorHp)) {
+                    $errors[] = "Baris ke-" . ($index + 2) . ": Nomor HP tidak valid.";
+                    continue;
+                }
+
+                $employee = Employee::where('nomor_ktp', $nomorKtp)->first();
+                if (!$employee) {
+                    $errors[] = "Baris ke-" . ($index + 2) . ": Karyawan tidak ditemukan.";
+                    continue;
+                }
+
+                $employee->nomor_hp = $nomorHp;
+                $employee->save();
+                $updated++;
+            }
+
+            return response()->json([
+                'status' => 'success',
+                'updated' => $updated,
+                'errors' => $errors
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Terjadi kesalahan saat membaca file Excel.'
+            ], 500);
+        }
+    }
 }

@@ -55,9 +55,19 @@
                             </div>
                             <div class="col-sm-auto ms-auto">
                                 <div class="hstack gap-2">
+                                    <button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#uploadWaModal">
+                                        Update Nomor WhatsApp
+                                    </button>
 
-                                    <button type="button" class="btn btn-info" data-bs-toggle="offcanvas" href="#offcanvasExample"><i class="ri-filter-3-line align-bottom me-1"></i> Fliters</button>
+                                    <a href="{{ route('download.templateData') }}" class="btn btn-info">
+                                        Download Template Data Karyawan
+                                    </a>
+
+                                    <a href="{{ route('download.templateWa') }}" class="btn btn-secondary">
+                                        Download Template Nomor WA
+                                    </a>
                                     <button type="button" class="btn btn-primary add-btn" id="btnAdd"><i class="ri-add-line align-bottom me-1"></i> Add Karyawan</button>
+
                                     <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#uploadModal">
                                         Upload Excel
                                     </button>
@@ -72,12 +82,13 @@
                                 <table class="table align-middle" id="employeeTable">
                                     <thead class="table-light">
                                         <tr>
+                                            <th>Action</th>
                                             <th>No</th>
+                                            <th>Nama Karyawan</th>
                                             <th>Company</th>
                                             <th>NIK BAS</th>
                                             <th>Nama Vendor</th>
                                             <th>NIK OS</th>
-                                            <th>Nama Karyawan</th>
                                             <th>Nomor KTP</th>
                                             <th>Jenis Kelamin</th>
                                             <th>Alamat KTP</th>
@@ -97,7 +108,6 @@
                                             <th>Kode Jabatan</th>
                                             <th>Begin Date</th>
                                             <th>Tanggal Masuk</th>
-                                            <th>Action</th>
                                         </tr>
                                     </thead>
                                     <tbody></tbody>
@@ -289,6 +299,32 @@
             </div>
         </div>
 
+        <div class="modal fade" id="uploadWaModal" tabindex="-1" aria-labelledby="uploadWaModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <form id="uploadWaForm" enctype="multipart/form-data">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="uploadWaModalLabel">Upload Nomor WhatsApp dari Excel</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+
+                            <div class="mb-3">
+                                <label for="file" class="form-label">Pilih File Excel (.xlsx/.xls)</label>
+                                <input type="file" name="file" class="form-control" required accept=".xlsx,.xls">
+                            </div>
+
+                            <div id="uploadResult" class="mt-2"></div>
+
+                        </div>
+                        <div class="modal-footer">
+                            <button type="submit" class="btn btn-success">Upload & Update</button>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
 
     </div>
 </div>
@@ -323,12 +359,16 @@
                 const no = (currentPage - 1) * itemsPerPage + index + 1;
                 rows += `
             <tr>
+                <td>
+                    <button class="btn btn-sm btn-warning btnEdit" data-id="${emp.id}" style="margin:3px;">Edit</button> 
+                    <button class="btn btn-sm btn-danger btnDelete" data-id="${emp.id}" style="margin:3px;">Hapus</button>
+                </td>
                 <td>${no}</td>
+                <td>${emp.nama_karyawan}</td>
                 <td>${emp.company}</td>
                 <td>${emp.nik_bas}</td>
                 <td>${emp.nama_vendor || ''}</td>
                 <td>${emp.nik_os}</td>
-                <td>${emp.nama_karyawan}</td>
                 <td>${emp.nomor_ktp}</td>
                 <td>${emp.jenis_kelamin}</td>
                 <td>${emp.alamat_ktp}</td>
@@ -348,10 +388,7 @@
                 <td>${emp.kode_jabatan}</td>
                 <td>${emp.begin_date}</td>
                 <td>${emp.tanggal_masuk}</td>  
-                <td>
-                    <button class="btn btn-sm btn-warning btnEdit" data-id="${emp.id}">Edit</button>
-                    <button class="btn btn-sm btn-danger btnDelete" data-id="${emp.id}">Hapus</button>
-                </td>
+                
             </tr>`;
             });
 
@@ -538,11 +575,12 @@
             const keyword = $('.search').val().toLowerCase();
             const filteredList = employeesList.filter(emp => {
                 return (
+
+                    emp.nama_karyawan?.toLowerCase().includes(keyword) ||
                     emp.company?.toLowerCase().includes(keyword) ||
                     emp.nik_bas?.toLowerCase().includes(keyword) ||
                     emp.nama_vendor?.toLowerCase().includes(keyword) ||
                     emp.nik_os?.toLowerCase().includes(keyword) ||
-                    emp.nama_karyawan?.toLowerCase().includes(keyword) ||
                     emp.nomor_ktp?.toLowerCase().includes(keyword) ||
                     emp.jenis_kelamin?.toLowerCase().includes(keyword) ||
                     emp.alamat_ktp?.toLowerCase().includes(keyword) ||
@@ -579,12 +617,16 @@
                 const no = start + index + 1;
                 rows += `
         <tr>
+            <td>
+                <button class="btn btn-sm btn-warning btnEdit" data-id="${emp.id}">Edit</button>
+                <button class="btn btn-sm btn-danger btnDelete" data-id="${emp.id}">Hapus</button>
+            </td>
             <td>${no}</td>
+            <td>${emp.nama_karyawan}</td>
             <td>${emp.company}</td>
             <td>${emp.nik_bas}</td>
             <td>${emp.nama_vendor || ''}</td>
             <td>${emp.nik_os}</td>
-            <td>${emp.nama_karyawan}</td>
             <td>${emp.nomor_ktp}</td>
             <td>${emp.jenis_kelamin}</td>
             <td>${emp.alamat_ktp}</td>
@@ -604,10 +646,7 @@
             <td>${emp.kode_jabatan}</td>
             <td>${emp.begin_date}</td>
             <td>${emp.tanggal_masuk}</td>  
-            <td>
-                <button class="btn btn-sm btn-warning btnEdit" data-id="${emp.id}">Edit</button>
-                <button class="btn btn-sm btn-danger btnDelete" data-id="${emp.id}">Hapus</button>
-            </td>
+            
         </tr>`;
             });
 
@@ -621,6 +660,40 @@
 
         $('.search').on('input', function() {
             handleSearch();
+        });
+
+        $('#uploadWaForm').on('submit', function(e) {
+            e.preventDefault();
+
+            let formData = new FormData(this);
+            $('#uploadResult').html('<div class="text-info">Mengunggah dan memproses file...</div>');
+
+            $.ajax({
+                url: '/employee/upload-wa',
+                method: 'POST',
+                data: formData,
+                contentType: false,
+                processData: false,
+                success: function(res) {
+                    if (res.status === 'success') {
+                        let message = `<div class="alert alert-success">
+                        <strong>Berhasil update:</strong> ${res.updated} data.<br>`;
+                        if (res.errors.length) {
+                            message += `<strong>Error (${res.errors.length}):</strong><ul>`;
+                            res.errors.forEach(err => message += `<li>${err}</li>`);
+                            message += `</ul>`;
+                        }
+                        message += `</div>`;
+                        $('#uploadResult').html(message);
+                    } else {
+                        $('#uploadResult').html('<div class="alert alert-danger">Gagal: ' + res.message + '</div>');
+                    }
+                },
+                error: function(xhr) {
+                    let msg = xhr.responseJSON?.message ?? 'Terjadi kesalahan saat upload.';
+                    $('#uploadResult').html('<div class="alert alert-danger">' + msg + '</div>');
+                }
+            });
         });
     });
 </script>
