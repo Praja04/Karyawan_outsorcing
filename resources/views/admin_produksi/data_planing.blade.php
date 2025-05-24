@@ -201,6 +201,16 @@
                             <input type="date" name="end_date" id="edit-end_date" class="form-control" required>
                         </div>
                         <div class="mb-3">
+                            <label for="shift" class="form-label">Shift</label>
+                            <select name="shift" class="form-control" required>
+                                <option value="">-- Pilih Shift --</option>
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                                
+                            </select>
+                        </div>
+                        <div class="mb-3">
                             <label>Group</label>
                             <select name="group" id="edit-group" class="form-control" required place>
                                 <option disabled selected>Pilih Group</option>
