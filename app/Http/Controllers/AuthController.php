@@ -32,7 +32,7 @@ class AuthController extends Controller
                     $redirectUrl = url('admin/dashboard');
                     break;
                 case 'admin_hrd_mitra':
-                    $redirectUrl = url('admin/dashboard');
+                    $redirectUrl = url('admin/hrd/mitra');
                     break;
                 case 'admin_produksi':
                     $redirectUrl = url('supervisor/dashboard');

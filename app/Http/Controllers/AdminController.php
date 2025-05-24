@@ -5,11 +5,14 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Employee;
 use App\Models\EmployeeSchedule;
+use App\Models\Planning;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use Illuminate\Support\Facades\Validator;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Response;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 
 
@@ -22,7 +25,9 @@ class AdminController extends Controller
         if (!session('login') || !session('username')) {
             return redirect('/login');
         }
-        return view('admin.dashboard');
+        $plannings = Planning::orderBy('start_date', 'desc')->get();
+        
+        return view('admin.dashboard', compact('plannings'));
     }
 
     //management karyawan
@@ -49,8 +54,7 @@ class AdminController extends Controller
         $employees = Employee::orderBy('grup')->orderBy('nama_karyawan')->get();
         $schedules = EmployeeSchedule::with('employee')->orderBy('start_date', 'desc')->get();
 
-        return view('admin.hrd.plotting_karyawan', compact('groups', 'employees','schedules'));
-        
+        return view('admin.hrd.plotting_karyawan', compact('groups', 'employees', 'schedules'));
     }
 
 
@@ -240,7 +244,7 @@ class AdminController extends Controller
     public function downloadTemplateUploadData()
     {
         $path = 'templates/template_upload_data_karyawan.xlsx'; // Tanpa 'public/' prefix
-       
+
         $fullPath = storage_path('app/public/' . $path);
 
         if (!file_exists($fullPath)) {
@@ -324,4 +328,76 @@ class AdminController extends Controller
             ], 500);
         }
     }
+
+    //api dashboard
+    public function Api_Summary_Dashboard_admin_hrd()
+    {
+        $today = Carbon::today();
+
+        // Total semua karyawan
+        $totalEmployees = Employee::count();
+
+        // Planning yang aktif hari ini
+        $activePlannings = Planning::whereDate('start_date', '<=', $today)
+            ->whereDate('end_date', '>', $today)
+            ->get();
+
+        // Ringkasan hari ini
+        $totalKebutuhanHariIni = 0;
+        $totalSudahDipplotHariIni = 0;
+
+        $todaySummary = $activePlannings->map(function ($planning) use (&$totalKebutuhanHariIni, &$totalSudahDipplotHariIni) {
+            $jumlahDipplot = $planning->plottingKehadiran()->count();
+            $totalKebutuhanHariIni += $planning->jumlah_karyawan;
+            $totalSudahDipplotHariIni += $jumlahDipplot;
+
+            return [
+                'id' => $planning->id,
+                'tanggal' => Carbon::parse($planning->start_date)->format('Y-m-d') . ' s.d. ' . Carbon::parse($planning->end_date)->format('Y-m-d'),
+                'kebutuhan' => $planning->jumlah_karyawan,
+                'sudah_dipplot' => $jumlahDipplot,
+                'sisa' => max($planning->jumlah_karyawan - $jumlahDipplot, 0),
+            ];
+        });
+
+        $totalBelumDipplotHariIni = max($totalKebutuhanHariIni - $totalSudahDipplotHariIni, 0);
+
+        // Grafik 7 hari ke depan
+        $range = collect();
+        for ($i = 0; $i < 7; $i++) {
+            $tanggal = $today->copy()->addDays($i)->toDateString();
+
+            $plannings = Planning::whereDate('start_date', '<=', $tanggal)
+                ->whereDate('end_date', '>=', $tanggal)
+                ->get();
+
+            $totalKebutuhan = $plannings->sum('jumlah_karyawan');
+            $totalDipplot = $plannings->sum(fn ($p) => $p->plottingKehadiran()->count());
+
+            $range->push([
+                'tanggal' => $tanggal,
+                'kebutuhan' => $totalKebutuhan,
+                'sudah_dipplot' => $totalDipplot,
+                'sisa' => max($totalKebutuhan - $totalDipplot, 0),
+            ]);
+        }
+
+        return response()->json([
+            'totalEmployees' => $totalEmployees,
+            'activePlanningCount' => $activePlannings->count(),
+            'activePlanning' => $activePlannings,
+            'todaySummary' => $todaySummary,
+            'totalKebutuhanHariIni' => $totalKebutuhanHariIni,
+            'totalSudahDipplotHariIni' => $totalSudahDipplotHariIni,
+            'totalBelumDipplotHariIni' => $totalBelumDipplotHariIni,
+            'grafikRange' => $range,
+        ]);
+    }
+
+    public function planningDetail($id)
+    {
+        $planning = Planning::with('plottingKehadiran.employee')->findOrFail($id);
+        return view('admin.hrd.plotting_view', compact('planning'));
+    }
+    
 }

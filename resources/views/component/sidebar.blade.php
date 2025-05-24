@@ -40,14 +40,8 @@
                 <li class="menu-title"><i class="ri-more-fill"></i> <span data-key="t-pages">Lainnya</span></li>
                 @elseif(Session::get('user_role') === 'admin_hrd_mitra' )
                 <li class="menu-title"><span data-key="t-menu">Menu</span></li>
-
                 <li class="nav-item">
-                    <a class="nav-link menu-link" href="{{ url('admin/dashboard') }}">
-                        <i class="mdi mdi-card-account-details"></i> <span data-key="t-widgets">Dashboard</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link menu-link" href="{{ url('admin/kelola/karyawan') }}">
+                    <a class="nav-link menu-link" href="{{ url('admin/hrd/mitra') }}">
                         <i class="mdi mdi-card-account-details"></i> <span data-key="t-widgets">Manage Karyawan</span>
                     </a>
                 </li>

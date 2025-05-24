@@ -13,6 +13,11 @@ class Planning extends Model
     protected $fillable = [
         'start_date', 'end_date','shift', 'group', 'jumlah_karyawan', 'created_by', 'kode_bagian', 'kode_jabatan'
     ];
+    // app/Models/Planning.php
+    protected $casts = [
+        'start_date' => 'date',
+        'end_date' => 'date',
+    ];
 
     public function plottingKehadiran()
     {

@@ -184,6 +184,11 @@ class ForemanController extends Controller
             'message' => 'Plotting berhasil diperbarui dan notifikasi dikirim.'
         ]);
     }
-    
 
+    public function showPlotting($id)
+    {
+        $planning = Planning::with('plottingKehadiran.employee')->findOrFail($id);
+
+        return view('staff_produksi.plotting_view', compact('planning'));
+    }
 }

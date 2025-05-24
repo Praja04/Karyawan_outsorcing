@@ -296,6 +296,12 @@
 </div>
 <script>
     $(document).ready(function() {
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            }
+        });
+
         const max = "{{$planning->jumlah_karyawan}}";
         const checkboxes = $('input[type="checkbox"][name="employee_ids[]"]');
 

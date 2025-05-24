@@ -17,11 +17,11 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 // Route hanya untuk admin
 Route::prefix('admin')->group(function () {
+    //hrd mitra
+    Route::get('/hrd/mitra', [AdminController::class, 'index']);
+    // hrd Bas
     Route::get('/kelola/karyawan', [AdminController::class, 'index']);
-    //Route::get('/dashboard', [AdminController::class, 'dashboard']);
-    Route::get('/dashboard', function () {
-        return view('admin.dashboard');
-    });
+    Route::get('/dashboard', [AdminController::class, 'dashboard']);
     Route::get('/plotting/prd', [AdminController::class, 'plot_prd']);
 
     // CRUD management karyawan
@@ -33,6 +33,14 @@ Route::prefix('admin')->group(function () {
     Route::post('/employees/update/wa', [AdminController::class, 'uploadNomorWaExcel'])->name('employees.update_wa');
     Route::get('/download-template', [AdminController::class, 'downloadTemplateUploadData'])->name('download.templateData');
     Route::get('/download-template-wa', [AdminController::class, 'downloadTemplateUpdateWA'])->name('download.templateWa');
+    Route::post('/employee/template-wa', [AdminController::class, 'uploadNomorWaExcel'])->name('upload.templateWa');
+    Route::get('/planning/{id}/plotting', [AdminController::class, 'planningDetail'])->name('admin_hrd.plotting.show');
+    // routes/web.php
+    Route::get('/planning/{id}/detail', [AdminController::class, 'planningDetail'])->name('planning.detail');
+
+    //api dashboard
+    Route::get('/api/dashboard/summary', [AdminController::class, 'Api_Summary_Dashboard_admin_hrd'])->name('api.dashboard_hrd');
+    
 });
 
 Route::prefix('supervisor')->group(function () {
@@ -55,6 +63,7 @@ Route::prefix('foreman')->group(function () {
     Route::post('/plotting', [ForemanController::class, 'storePlotting'])->name('foreman.plotting.store');
     Route::post('/plotting/update', [ForemanController::class, 'updatePlotting'])->name('plotting.update'); // ← EDIT Plotting
     Route::delete('/plotting/{id}', [ForemanController::class, 'deletePlotting'])->name('foreman.plotting.delete');
+    Route::get('/planning/{id}/plotting', [ForemanController::class, 'showPlotting'])->name('foreman.plotting.show');
 });
 
 

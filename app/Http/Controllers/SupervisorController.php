@@ -14,8 +14,8 @@ class SupervisorController extends Controller
         if (Auth::user()->role !== 'admin_produksi') {
             abort(403, 'Akses ditolak');
         }
-
-        return view('admin_produksi.dashboard');
+        $plannings = Planning::orderBy('start_date', 'desc')->get();
+        return view('admin_produksi.dashboard', compact('plannings'));
     }
     public function data_planing()
     {

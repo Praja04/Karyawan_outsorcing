@@ -226,6 +226,12 @@
 </div>
 
 <script>
+    $.ajaxSetup({
+        headers: {
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+        }
+    });
+
     // Show modal edit
     $('.edit-btn').on('click', function() {
         $('#edit-id').val($(this).data('id'));
