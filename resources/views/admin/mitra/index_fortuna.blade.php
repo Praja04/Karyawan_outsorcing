@@ -344,7 +344,7 @@
 
         function fetchEmployees() {
             $.ajax({
-                url: baseUrl,
+                url: baseUrl+ '/fortuna', // Ganti dengan endpoint yang sesuai
                 method: 'GET',
                 success: function(res) {
                     employeesList = res;
