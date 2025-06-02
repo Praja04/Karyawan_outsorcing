@@ -344,11 +344,10 @@
 
         function fetchEmployees() {
             $.ajax({
-                url: baseUrl+ '/fortuna', // Ganti dengan endpoint yang sesuai
+                url: baseUrl + '/fortuna', // Ganti dengan endpoint yang sesuai
                 method: 'GET',
                 success: function(res) {
                     employeesList = res;
-                    filteredEmployees = res; // default: semua data
                     renderTable();
                 },
                 error: function() {
@@ -356,7 +355,6 @@
                 }
             });
         }
-
 
         function renderTable() {
             const start = (currentPage - 1) * itemsPerPage;
@@ -418,13 +416,12 @@
 
         $('.pagination-next').click(function(e) {
             e.preventDefault();
-            const totalPages = Math.ceil((isSearching ? filteredEmployees.length : employeesList.length) / itemsPerPage);
+            const totalPages = Math.ceil(employeesList.length / itemsPerPage);
             if (currentPage < totalPages) {
                 currentPage++;
                 renderTable();
             }
         });
-
 
 
 
@@ -581,47 +578,39 @@
 
         //fitur search
         function handleSearch() {
-            const keyword = $('.search').val().trim().toLowerCase();
+            const keyword = $('.search').val().toLowerCase();
+            const filteredList = employeesList.filter(emp => {
+                return (
 
-            if (keyword === '') {
-                isSearching = false;
-                filteredEmployees = employeesList;
-            } else {
-                isSearching = true;
-                filteredEmployees = employeesList.filter(emp => {
-                    return (
-                        (emp.nama_karyawan || '').toLowerCase().includes(keyword) ||
-                        (emp.company || '').toLowerCase().includes(keyword) ||
-                        (emp.nik_bas || '').toLowerCase().includes(keyword) ||
-                        (emp.nama_vendor || '').toLowerCase().includes(keyword) ||
-                        (emp.nik_os || '').toLowerCase().includes(keyword) ||
-                        (emp.nomor_ktp || '').toLowerCase().includes(keyword) ||
-                        (emp.jenis_kelamin || '').toLowerCase().includes(keyword) ||
-                        (emp.alamat_ktp || '').toLowerCase().includes(keyword) ||
-                        (emp.tempat_lahir || '').toLowerCase().includes(keyword) ||
-                        (emp.tanggal_lahir || '').toLowerCase().includes(keyword) ||
-                        (emp.nomor_hp || '').toLowerCase().includes(keyword) ||
-                        (emp.email || '').toLowerCase().includes(keyword) ||
-                        (emp.agama || '').toLowerCase().includes(keyword) ||
-                        (emp.status_nikah || '').toLowerCase().includes(keyword) ||
-                        (emp.pendidikan || '').toLowerCase().includes(keyword) ||
-                        (emp.employee_type || '').toLowerCase().includes(keyword) ||
-                        (emp.action_type || '').toLowerCase().includes(keyword) ||
-                        (emp.kode_level || '').toLowerCase().includes(keyword) ||
-                        (emp.kode_department || '').toLowerCase().includes(keyword) ||
-                        (emp.grup || '').toLowerCase().includes(keyword) ||
-                        (emp.kode_bagian || '').toLowerCase().includes(keyword) ||
-                        (emp.kode_jabatan || '').toLowerCase().includes(keyword) ||
-                        (emp.begin_date || '').toLowerCase().includes(keyword) ||
-                        (emp.tanggal_masuk || '').toLowerCase().includes(keyword)
-                    );
-                });
-            }
+                    emp.nama_karyawan?.toLowerCase().includes(keyword) ||
+                    emp.company?.toLowerCase().includes(keyword) ||
+                    emp.nik_bas?.toLowerCase().includes(keyword) ||
+                    emp.nama_vendor?.toLowerCase().includes(keyword) ||
+                    emp.nik_os?.toLowerCase().includes(keyword) ||
+                    emp.nomor_ktp?.toLowerCase().includes(keyword) ||
+                    emp.jenis_kelamin?.toLowerCase().includes(keyword) ||
+                    emp.alamat_ktp?.toLowerCase().includes(keyword) ||
+                    emp.tempat_lahir?.toLowerCase().includes(keyword) ||
+                    emp.tanggal_lahir?.toLowerCase().includes(keyword) ||
+                    emp.nomor_hp?.toLowerCase().includes(keyword) ||
+                    emp.email?.toLowerCase().includes(keyword) ||
+                    emp.agama?.toLowerCase().includes(keyword) ||
+                    emp.status_nikah?.toLowerCase().includes(keyword) ||
+                    emp.pendidikan?.toLowerCase().includes(keyword) ||
+                    emp.employee_type?.toLowerCase().includes(keyword) ||
+                    emp.action_type?.toLowerCase().includes(keyword) ||
+                    emp.kode_level?.toLowerCase().includes(keyword) ||
+                    emp.kode_department?.toLowerCase().includes(keyword) ||
+                    emp.grup?.toLowerCase().includes(keyword) ||
+                    emp.kode_bagian?.toLowerCase().includes(keyword) ||
+                    emp.kode_jabatan?.toLowerCase().includes(keyword) ||
+                    emp.begin_date?.toLowerCase().includes(keyword) ||
+                    emp.tanggal_masuk?.toLowerCase().includes(keyword)
+                );
+            });
 
-            currentPage = 1;
-            renderTable();
+            renderFilteredTable(filteredList);
         }
-
 
         function renderFilteredTable(filteredList) {
             currentPage = 1; // reset ke halaman pertama
@@ -633,38 +622,38 @@
             paginatedItems.forEach((emp, index) => {
                 const no = start + index + 1;
                 rows += `
-            <tr>
-                <td>
-                    <button class="btn btn-sm btn-warning btnEdit" data-id="${emp.id}">Edit</button>
-                    <button class="btn btn-sm btn-danger btnDelete" data-id="${emp.id}">Hapus</button>
-                </td>
-                <td>${no}</td>
-                <td>${emp.nama_karyawan}</td>
-                <td>${emp.company}</td>
-                <td>${emp.nik_bas}</td>
-                <td>${emp.nama_vendor || ''}</td>
-                <td>${emp.nik_os}</td>
-                <td>${emp.nomor_ktp}</td>
-                <td>${emp.jenis_kelamin}</td>
-                <td>${emp.alamat_ktp}</td>
-                <td>${emp.tempat_lahir}</td>
-                <td>${emp.tanggal_lahir}</td>
-                <td>${emp.nomor_hp}</td>
-                <td>${emp.email}</td>
-                <td>${emp.agama}</td>
-                <td>${emp.status_nikah}</td>
-                <td>${emp.pendidikan}</td>
-                <td>${emp.employee_type}</td>
-                <td>${emp.action_type}</td>
-                <td>${emp.kode_level}</td>
-                <td>${emp.kode_department}</td>
-                <td>${emp.grup}</td>
-                <td>${emp.kode_bagian}</td>
-                <td>${emp.kode_jabatan}</td>
-                <td>${emp.begin_date}</td>
-                <td>${emp.tanggal_masuk}</td>  
-                
-            </tr>`;
+        <tr>
+            <td>
+                <button class="btn btn-sm btn-warning btnEdit" data-id="${emp.id}">Edit</button>
+                <button class="btn btn-sm btn-danger btnDelete" data-id="${emp.id}">Hapus</button>
+            </td>
+            <td>${no}</td>
+            <td>${emp.nama_karyawan}</td>
+            <td>${emp.company}</td>
+            <td>${emp.nik_bas}</td>
+            <td>${emp.nama_vendor || ''}</td>
+            <td>${emp.nik_os}</td>
+            <td>${emp.nomor_ktp}</td>
+            <td>${emp.jenis_kelamin}</td>
+            <td>${emp.alamat_ktp}</td>
+            <td>${emp.tempat_lahir}</td>
+            <td>${emp.tanggal_lahir}</td>
+            <td>${emp.nomor_hp}</td>
+            <td>${emp.email}</td>
+            <td>${emp.agama}</td>
+            <td>${emp.status_nikah}</td>
+            <td>${emp.pendidikan}</td>
+            <td>${emp.employee_type}</td>
+            <td>${emp.action_type}</td>
+            <td>${emp.kode_level}</td>
+            <td>${emp.kode_department}</td>
+            <td>${emp.grup}</td>
+            <td>${emp.kode_bagian}</td>
+            <td>${emp.kode_jabatan}</td>
+            <td>${emp.begin_date}</td>
+            <td>${emp.tanggal_masuk}</td>  
+            
+        </tr>`;
             });
 
             $('#employeeTable tbody').html(rows);
@@ -678,7 +667,6 @@
         $('.search').on('input', function() {
             handleSearch();
         });
-
 
         $('#uploadWaForm').on('submit', function(e) {
             e.preventDefault();
