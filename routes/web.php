@@ -18,7 +18,8 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 // Route hanya untuk admin
 Route::prefix('admin')->group(function () {
     //hrd mitra
-    Route::get('/hrd/mitra', [AdminController::class, 'index']);
+    Route::get('/hrd/mitra/kmj', [AdminController::class, 'index_kmj']);
+    Route::get('/hrd/mitra/fortuna', [AdminController::class, 'index_fortuna']);
     // hrd Bas
     Route::get('/kelola/karyawan', [AdminController::class, 'index']);
     Route::get('/dashboard', [AdminController::class, 'dashboard']);
@@ -26,6 +27,8 @@ Route::prefix('admin')->group(function () {
 
     // CRUD management karyawan
     Route::get('/employees', [AdminController::class, 'getKaryawan']);
+    Route::get('/employees/kmj', [AdminController::class, 'getKaryawan_KMJ']);
+    Route::get('/employees/fortuna', [AdminController::class, 'getKaryawan_Fortuna']);
     Route::post('/employees', [AdminController::class, 'store']);
     Route::put('/employees/{id}', [AdminController::class, 'update']);
     Route::delete('/employees/{id}', [AdminController::class, 'destroy']);

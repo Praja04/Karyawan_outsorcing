@@ -338,16 +338,13 @@
 
         const baseUrl = "{{ url('/admin/employees') }}";
         let employeesList = [];
-        let filteredEmployees = [];
         let currentPage = 1;
-        let isSearching = false;
-
         const itemsPerPage = 10;
 
 
         function fetchEmployees() {
             $.ajax({
-                url: baseUrl,
+                url: baseUrl+ '/kmj', // Ganti dengan endpoint yang sesuai
                 method: 'GET',
                 success: function(res) {
                     employeesList = res;
@@ -360,55 +357,54 @@
         }
 
         function renderTable() {
-            const listToRender = isSearching ? filteredEmployees : employeesList;
-            const totalPages = Math.ceil(listToRender.length / itemsPerPage);
             const start = (currentPage - 1) * itemsPerPage;
             const end = start + itemsPerPage;
-            const paginatedItems = listToRender.slice(start, end);
-
+            const paginatedItems = employeesList.slice(start, end);
             let rows = '';
             paginatedItems.forEach((emp, index) => {
-                const no = start + index + 1;
+                const no = (currentPage - 1) * itemsPerPage + index + 1;
                 rows += `
-        <tr>
-            <td>
-                <button class="btn btn-sm btn-warning btnEdit" data-id="${emp.id}">Edit</button>
-                <button class="btn btn-sm btn-danger btnDelete" data-id="${emp.id}">Hapus</button>
-            </td>
-            <td>${no}</td>
-            <td>${emp.nama_karyawan}</td>
-            <td>${emp.company}</td>
-            <td>${emp.nik_bas}</td>
-            <td>${emp.nama_vendor || ''}</td>
-            <td>${emp.nik_os}</td>
-            <td>${emp.nomor_ktp}</td>
-            <td>${emp.jenis_kelamin}</td>
-            <td>${emp.alamat_ktp}</td>
-            <td>${emp.tempat_lahir}</td>
-            <td>${emp.tanggal_lahir}</td>
-            <td>${emp.nomor_hp}</td>
-            <td>${emp.email}</td>
-            <td>${emp.agama}</td>
-            <td>${emp.status_nikah}</td>
-            <td>${emp.pendidikan}</td>
-            <td>${emp.employee_type}</td>
-            <td>${emp.action_type}</td>
-            <td>${emp.kode_level}</td>
-            <td>${emp.kode_department}</td>
-            <td>${emp.grup}</td>
-            <td>${emp.kode_bagian}</td>
-            <td>${emp.kode_jabatan}</td>
-            <td>${emp.begin_date}</td>
-            <td>${emp.tanggal_masuk}</td>  
-        </tr>`;
+            <tr>
+                <td>
+                    <button class="btn btn-sm btn-warning btnEdit" data-id="${emp.id}" style="margin:3px;">Edit</button> 
+                    <button class="btn btn-sm btn-danger btnDelete" data-id="${emp.id}" style="margin:3px;">Hapus</button>
+                </td>
+                <td>${no}</td>
+                <td>${emp.nama_karyawan}</td>
+                <td>${emp.company}</td>
+                <td>${emp.nik_bas}</td>
+                <td>${emp.nama_vendor || ''}</td>
+                <td>${emp.nik_os}</td>
+                <td>${emp.nomor_ktp}</td>
+                <td>${emp.jenis_kelamin}</td>
+                <td>${emp.alamat_ktp}</td>
+                <td>${emp.tempat_lahir}</td>
+                <td>${emp.tanggal_lahir}</td>
+                <td>${emp.nomor_hp}</td>
+                <td>${emp.email}</td>
+                <td>${emp.agama}</td>
+                <td>${emp.status_nikah}</td>
+                <td>${emp.pendidikan}</td>
+                <td>${emp.employee_type}</td>
+                <td>${emp.action_type}</td>
+                <td>${emp.kode_level}</td>
+                <td>${emp.kode_department}</td>
+                <td>${emp.grup}</td>
+                <td>${emp.kode_bagian}</td>
+                <td>${emp.kode_jabatan}</td>
+                <td>${emp.begin_date}</td>
+                <td>${emp.tanggal_masuk}</td>  
+                
+            </tr>`;
             });
 
             $('#employeeTable tbody').html(rows);
 
+            // Atur Previous dan Next button
+            const totalPages = Math.ceil(employeesList.length / itemsPerPage);
             $('.pagination-prev').toggleClass('disabled', currentPage === 1);
-            $('.pagination-next').toggleClass('disabled', currentPage === totalPages || totalPages === 0);
+            $('.pagination-next').toggleClass('disabled', currentPage === totalPages);
         }
-
 
         $('.pagination-prev').click(function(e) {
             e.preventDefault();

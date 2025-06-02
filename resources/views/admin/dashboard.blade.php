@@ -281,7 +281,7 @@
                                             <a href="{{ route('admin_hrd.plotting.show', $plan->id) }}" class="btn btn-info btn-sm">
                                                 View
                                             </a>
-                                           
+
                                         </td>
                                     </tr>
                                     @empty
@@ -350,51 +350,10 @@
         // Fungsi untuk load data dari API
 
         let currentPage = 1;
-        let perPage = 1; // ← Ubah ini untuk jumlah data per halaman
+        let perPage = 5; // ← Ubah ini untuk jumlah data per halaman
         let allPlanningData = []; // Simpan semua data
         function renderPlanningPage() {
-            const planningList = $('#activePlanningList');
-            planningList.empty();
-
-            const start = (currentPage - 1) * perPage;
-            const end = start + perPage;
-            const pageData = allPlanningData.slice(start, end);
-
-            pageData.forEach(item => {
-                const startDate = new Date(item.start_date);
-                const day = ('0' + startDate.getDate()).slice(-2);
-                const month = ('0' + (startDate.getMonth() + 1)).slice(-2);
-                const year = startDate.getFullYear().toString().slice(-2);
-                const dayName = startDate.toLocaleString('en-US', {
-                    weekday: 'short'
-                });
-                const tanggalDisplay = `${day}-${month}-${year}`;
-
-                const html = `
-            <li class="list-group-item ps-0">
-                <div class="row align-items-center g-3">
-                    <div class="col-auto">
-                        <div class="avatar-sm p-1 py-2 h-auto bg-light rounded-3 shadow">
-                            <div class="text-center">
-                                <h5 class="mb-0">${day}</h5>
-                                <div class="text-muted">${dayName}</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col">
-                        <h5 class="text-muted mt-0 mb-1 fs-13">
-                            ${tanggalDisplay} (${item.group}) - ${item.jumlah_karyawan} Orang
-                        </h5>
-                        <p class="text-reset fs-14 mb-0">
-                            Shift ${item.shift} - ${item.kode_bagian} - ${item.kode_jabatan}
-                        </p>
-                    </div>
-                </div>
-            </li>
-        `;
-                planningList.append(html);
-            });
-
+            
             // Update text showing
             $('#totalCount').text(allPlanningData.length);
 
@@ -453,11 +412,14 @@
                         const day = ('0' + start.getDate()).slice(-2);
                         const month = ('0' + (start.getMonth() + 1)).slice(-2);
                         const year = start.getFullYear().toString().slice(-2);
+                        const day_end = ('0' + end.getDate()).slice(-2);
+
                         const dayName = start.toLocaleString('en-US', {
                             weekday: 'short'
                         }); // Mon, Tue, etc
 
                         const tanggalDisplay = `${day}-${month}-${year}`;
+                       
 
                         const html = `
                     <li class="list-group-item ps-0">
@@ -472,7 +434,7 @@
                             </div>
                             <div class="col">
                                 <h5 class="text-muted mt-0 mb-1 fs-13">
-                                    ${tanggalDisplay} (${item.group}) - ${item.jumlah_karyawan} Orang
+                                    ${day} - ${day_end} / ${month} /  ${year} (${item.group}) - ${item.jumlah_karyawan} Orang
                                 </h5>
                                 <p class="text-reset fs-14 mb-0">
                                     Shift ${item.shift} - ${item.kode_bagian} - ${item.kode_jabatan}
@@ -489,7 +451,7 @@
                     renderChart(data.grafikRange);
 
                     allPlanningData = data.activePlanning;
-                    renderPlanningPage();
+                      renderPlanningPage();
 
                 },
                 error: function(err) {

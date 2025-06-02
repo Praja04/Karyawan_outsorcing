@@ -39,6 +39,22 @@ class AdminController extends Controller
         }
         return view('admin.hrd.index');
     }
+    public function index_kmj()
+    {
+        // cek apakah user punya session login true dan session username
+        if (!session('login') || !session('username')) {
+            return redirect('/login');
+        }
+        return view('admin.mitra.index_kmj');
+    }
+    public function index_fortuna()
+    {
+        // cek apakah user punya session login true dan session username
+        if (!session('login') || !session('username')) {
+            return redirect('/login');
+        }
+        return view('admin.mitra.index_fortuna');
+    }
 
     //plotting karyawan Prd
     public function plot_prd()
@@ -62,6 +78,16 @@ class AdminController extends Controller
     public function getKaryawan()
     {
         $karyawan = Employee::all();
+        return response()->json($karyawan, 200);
+    }
+    public function getKaryawan_KMJ()
+    {
+        $karyawan = Employee::where('nama_vendor', 'KMJ')->get();
+        return response()->json($karyawan, 200);
+    }
+    public function getKaryawan_Fortuna()
+    {
+        $karyawan =Employee::where('nama_vendor', 'Fortuna')->get();
         return response()->json($karyawan, 200);
     }
     public function store(Request $request)
@@ -338,8 +364,7 @@ class AdminController extends Controller
         $totalEmployees = Employee::count();
 
         // Planning yang aktif hari ini
-        $activePlannings = Planning::whereDate('start_date', '<=', $today)
-            ->whereDate('end_date', '>', $today)
+        $activePlannings = Planning::whereDate('end_date', '>', $today)
             ->get();
 
         // Ringkasan hari ini
