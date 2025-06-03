@@ -90,7 +90,7 @@
                             @csrf
 
                             <input type="hidden" name="planning_id" value="{{ $planning->id }}">
-
+                            <input type="hidden" name="shift" value="{{ $planning->shift }}">
                             {{-- Table Karyawan --}}
                             <div class="mb-2">
                                 <input type="text" class="form-control table-search" placeholder="Cari karyawan...">
@@ -140,7 +140,7 @@
 
         </div>
 
-
+        
         @if($planning->plottingKehadiran->count() > 0)
         <div class="row">
             <div class="col-lg-12">
@@ -255,8 +255,9 @@
                 <form id="editPlottingForm">
                     @csrf
                     <input type="hidden" name="id" id="edit-id">
-                    <input type="hidden" name="planning_id" value="{{ $planning->id }}">
                     <div class="modal-content">
+                        <input type="hidden" name="planning_id" value="{{ $planning->id }}">
+                        <input type="hidden" name="shift" value="{{ $planning->shift }}">
                         <div class="modal-header">
                             <h5 class="modal-title">Ganti Karyawan Plotting</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>

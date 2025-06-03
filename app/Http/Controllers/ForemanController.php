@@ -94,7 +94,7 @@ class ForemanController extends Controller
 
             $bulkMessages[] = [
                 'number' => $nomorTujuan,
-                'message' => "Halo *{$employee->nama_karyawan}*,\nAnda dijadwalkan masuk pada tanggal *" . $planning->start_date ." sampai " . $planning->end_date . "*.\nSilakan konfirmasi dengan membalas *Hadir* atau *Tidak Hadir*."
+                'message' => "Halo *{$employee->nama_karyawan}*,\nAnda dijadwalkan masuk pada tanggal *" . $planning->start_date ." sampai " . $planning->end_date .  " shift : " . $planning->shift . "*.\nSilakan konfirmasi dengan membalas *Hadir* atau *Tidak Hadir*."
             ];
         }
 
@@ -165,7 +165,7 @@ class ForemanController extends Controller
         $employee = Employee::find($request->new_employee_id);
         if ($employee && $employee->nomor_hp) {
             $nomorTujuan = preg_replace('/^0/', '62', preg_replace('/\D/', '', $employee->nomor_hp));
-            $message = "Halo *{$employee->nama_karyawan}*,\nAnda telah dijadwalkan ulang masuk pada tanggal *{$planning->start_date} sampai {$planning->end_date}*.\nSilakan konfirmasi dengan membalas *Hadir* atau *Tidak Hadir*.";
+            $message = "Halo *{$employee->nama_karyawan}*,\nAnda dijadwalkan masuk pada tanggal *" . $planning->start_date . " sampai " . $planning->end_date .  " shift : " . $planning->shift . "*.\nSilakan konfirmasi dengan membalas *Hadir* atau *Tidak Hadir*.";
 
             try {
                 Http::timeout(10)->post('http://localhost:3000/send-bulk', [
