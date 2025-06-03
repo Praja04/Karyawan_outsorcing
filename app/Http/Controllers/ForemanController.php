@@ -42,7 +42,7 @@ class ForemanController extends Controller
 
         // Ambil planning yang end_date >= hari ini
         $plannings = Planning::with('plottingKehadiran.employee')
-        ->where('group', $adminGroup)
+            ->where('group', $adminGroup)
             ->where('end_date', '>=', $today)
             ->orderBy('start_date', 'desc')
             ->get();
@@ -94,13 +94,13 @@ class ForemanController extends Controller
 
             $bulkMessages[] = [
                 'number' => $nomorTujuan,
-                'message' => "Halo *{$employee->nama_karyawan}*,\nAnda dijadwalkan masuk pada tanggal *" . $planning->start_date ." sampai " . $planning->end_date .  " shift : " . $planning->shift . "*.\nSilakan konfirmasi dengan membalas *Hadir* atau *Tidak Hadir*."
+                'message' => "Halo *{$employee->nama_karyawan}*,\nAnda dijadwalkan masuk pada tanggal *" . $planning->start_date . " sampai " . $planning->end_date .  " shift : " . $planning->shift . "*.\nSilakan konfirmasi dengan membalas *Hadir* atau *Tidak Hadir*."
             ];
         }
 
         // Kirim semua pesan sekaligus ke Node.js via /send-bulk
         try {
-            Http::timeout(10)->post('http://localhost:3000/send-bulk', [
+            Http::timeout(10)->post('http://10.11.11.10:3000/send-bulk', [
                 'messages' => $bulkMessages,
                 'delayMs' => 3000 // Opsional: delay antar pesan untuk keamanan
             ]);
@@ -113,7 +113,7 @@ class ForemanController extends Controller
             'message' => 'Plotting berhasil disimpan dan notifikasi dikirim.'
         ]);
     }
-    
+
     public function viewPlotting(Planning $planning)
     {
         // Ambil hanya karyawan dari grup terkait
@@ -168,7 +168,7 @@ class ForemanController extends Controller
             $message = "Halo *{$employee->nama_karyawan}*,\nAnda dijadwalkan masuk pada tanggal *" . $planning->start_date . " sampai " . $planning->end_date .  " shift : " . $planning->shift . "*.\nSilakan konfirmasi dengan membalas *Hadir* atau *Tidak Hadir*.";
 
             try {
-                Http::timeout(10)->post('http://localhost:3000/send-bulk', [
+                Http::timeout(10)->post('http://10.11.11.10:3000/send-bulk', [
                     'messages' => [
                         ['number' => $nomorTujuan, 'message' => $message]
                     ],
