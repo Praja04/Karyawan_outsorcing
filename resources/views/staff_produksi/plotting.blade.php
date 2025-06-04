@@ -140,7 +140,7 @@
 
         </div>
 
-        
+
         @if($planning->plottingKehadiran->count() > 0)
         <div class="row">
             <div class="col-lg-12">
@@ -270,7 +270,7 @@
                             </div>
 
                             <div class="mb-2">
-                                <input type="text" class="form-control modal-table-search" placeholder="Cari karyawan...">
+                                <input type="text" class="form-control search-edit modal-table-search" placeholder="Cari karyawan...">
                             </div>
 
                             <div class="table-responsive" style="max-height: 250px; overflow-y: auto;">
@@ -335,40 +335,114 @@
 
         checkboxes.on('change', toggleLimit);
 
+        // $('#plottingForm').on('submit', function(e) {
+        //     e.preventDefault();
+        //     const formData = $(this).serialize();
+
+        //     // Tampilkan loading SweetAlert
+        //     Swal.fire({
+        //         title: 'Menyimpan...',
+        //         text: 'Harap tunggu sebentar.',
+        //         allowOutsideClick: false,
+        //         didOpen: () => {
+        //             Swal.showLoading();
+        //         }
+        //     });
+
+        //     $.ajax({
+        //         url: "{{ route('foreman.plotting.store') }}",
+        //         method: 'POST',
+        //         data: formData,
+        //         success: function(res) {
+        //             Swal.fire({
+        //                 icon: 'success',
+        //                 title: 'Berhasil!',
+        //                 text: res.message || 'Plotting berhasil disimpan.',
+        //                 timer: 2000,
+        //                 showConfirmButton: false
+        //             }).then(() => {
+        //                 location.reload();
+        //             });
+        //         },
+        //         error: function(xhr) {
+        //             Swal.fire({
+        //                 icon: 'error',
+        //                 title: 'Gagal menyimpan',
+        //                 text: xhr.responseJSON?.message || 'Terjadi kesalahan. Coba lagi nanti.'
+        //             });
+        //         }
+        //     });
+        // });
+
         $('#plottingForm').on('submit', function(e) {
             e.preventDefault();
-            const formData = $(this).serialize();
 
-            // Tampilkan loading SweetAlert
-            Swal.fire({
-                title: 'Menyimpan...',
-                text: 'Harap tunggu sebentar.',
-                allowOutsideClick: false,
-                didOpen: () => {
-                    Swal.showLoading();
-                }
+            const form = $(this);
+            const checkedCheckboxes = form.find('input[name="employee_ids[]"]:checked');
+            if (checkedCheckboxes.length === 0) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Tidak ada karyawan dipilih',
+                    text: 'Pilih minimal satu karyawan sebelum menyimpan.'
+                });
+                return;
+            }
+
+            // Buat daftar nama untuk konfirmasi
+            let namaList = '';
+            checkedCheckboxes.each(function() {
+                const row = $(this).closest('tr');
+                const nik = row.find('td').eq(1).text();
+                const nama = row.find('td').eq(2).text();
+                namaList += `<li>${nik} - ${nama}</li>`;
             });
 
-            $.ajax({
-                url: "{{ route('foreman.plotting.store') }}",
-                method: 'POST',
-                data: formData,
-                success: function(res) {
+            Swal.fire({
+                title: 'Konfirmasi Plotting',
+                html: `
+                <p>Anda akan menyimpan plotting untuk karyawan berikut:</p>
+                <ul style="text-align: left;">${namaList}</ul>
+                <p>Lanjutkan menyimpan?</p>
+            `,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Ya, Simpan',
+                cancelButtonText: 'Batal',
+                reverseButtons: true,
+                allowOutsideClick: false
+            }).then((result) => {
+                if (result.isConfirmed) {
                     Swal.fire({
-                        icon: 'success',
-                        title: 'Berhasil!',
-                        text: res.message || 'Plotting berhasil disimpan.',
-                        timer: 2000,
-                        showConfirmButton: false
-                    }).then(() => {
-                        location.reload();
+                        title: 'Menyimpan...',
+                        text: 'Harap tunggu sebentar.',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
                     });
-                },
-                error: function(xhr) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Gagal menyimpan',
-                        text: xhr.responseJSON?.message || 'Terjadi kesalahan. Coba lagi nanti.'
+
+                    $.ajax({
+                        url: "{{ route('foreman.plotting.store') }}",
+                        method: 'POST',
+                        data: form.serialize(),
+                        success: function(res) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Berhasil!',
+                                text: res.message || 'Plotting berhasil disimpan.',
+                                timer: 2000,
+                                showConfirmButton: false
+                            }).then(() => {
+                                location.reload();
+                            });
+                        },
+                        error: function(xhr) {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Gagal menyimpan',
+                                text: xhr.responseJSON?.message || 'Terjadi kesalahan. Coba lagi nanti.'
+                            });
+                        }
                     });
                 }
             });
@@ -520,6 +594,28 @@
         let found = false;
 
         $('#ticket-list-data tr').each(function() {
+            let rowText = $(this).text().toLowerCase();
+
+            if (rowText.indexOf(keyword) > -1) {
+                $(this).show();
+                found = true;
+            } else {
+                $(this).hide();
+            }
+        });
+
+        if (!found) {
+            $('.noresult').show();
+        } else {
+            $('.noresult').hide();
+        }
+    });
+
+    $('.search-edit').on('keyup', function() {
+        let keyword = $(this).val().toLowerCase();
+        let found = false;
+
+        $('#modalEmployeeList tr').each(function() {
             let rowText = $(this).text().toLowerCase();
 
             if (rowText.indexOf(keyword) > -1) {
