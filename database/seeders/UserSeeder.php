@@ -19,18 +19,18 @@ class UserSeeder extends Seeder
         //     'password' => bcrypt('admin_hrd'),
         //     'role' => 'admin_hrd'
         // ]);
-        \App\Models\User::create([
-            'name' => 'Admin_HRD_KMJ',
-            'email' => 'Admin_HRD_KMJ@example.com',
-            'password' => bcrypt('admin_mitra'),
-            'role' => 'admin_hrd_mitra_kmj'
-        ]);
-        \App\Models\User::create([
-            'name' => 'Admin_HRD_Fortuna',
-            'email' => 'Admin_HRD_Fortuna@example.com',
-            'password' => bcrypt('admin_mitra'),
-            'role' => 'admin_hrd_mitra_fortuna'
-        ]);
+        // \App\Models\User::create([
+        //     'name' => 'Admin_HRD_KMJ',
+        //     'email' => 'Admin_HRD_KMJ@example.com',
+        //     'password' => bcrypt('admin_mitra'),
+        //     'role' => 'admin_hrd_mitra_kmj'
+        // ]);
+        // \App\Models\User::create([
+        //     'name' => 'Admin_HRD_Fortuna',
+        //     'email' => 'Admin_HRD_Fortuna@example.com',
+        //     'password' => bcrypt('admin_mitra'),
+        //     'role' => 'admin_hrd_mitra_fortuna'
+        // ]);
 
         // \App\Models\User::create([
         //     'name' => 'Admin_Produksi',
@@ -53,13 +53,12 @@ class UserSeeder extends Seeder
         //     'role' => 'staff_produksi',
         //     'admin_group'=> 'Group B'
         // ]);
-        // \App\Models\User::create([
-        //     'name' => 'Staff_Produksi3',
-        //     'email' => 'Staff_Produksi3@example.com',
-        //     'password' => bcrypt('staff_3'),
-        //     'role' => 'staff_produksi',
-        //     'admin_group'=> 'Group C'
-        // ]);
-
+        \App\Models\User::create([
+            'name' => 'Staff_Produksi4',
+            'email' => 'Staff_Produksi4@example.com',
+            'password' => bcrypt('staff_4'),
+            'role' => 'staff_produksi',
+            'admin_group' => 'Group N'
+        ]);
     }
 }
