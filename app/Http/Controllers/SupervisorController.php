@@ -29,7 +29,21 @@ class SupervisorController extends Controller
         ->distinct()
             ->pluck('grup');
 
-        return view('admin_produksi.data_planing', compact('plannings', 'groups'));
+        $kodeBagians = Employee::select('kode_bagian')
+        ->whereNotNull('kode_bagian')
+        ->distinct()
+            ->pluck('kode_bagian');
+
+        $kodeJabatans = Employee::select('kode_jabatan')
+        ->whereNotNull('kode_jabatan')
+        ->distinct()
+            ->pluck('kode_jabatan');
+
+        // Shift bisa tetap fixed: misalnya Shift 1, 2, 3
+        $shifts = ['1', '2', '3'];
+    
+
+        return view('admin_produksi.data_planing', compact('plannings', 'groups','kodeBagians', 'kodeJabatans', 'shifts'));
     }
 
     public function createPlanning()
@@ -114,14 +128,21 @@ class SupervisorController extends Controller
 
         $exists = Planning::where('id', '!=', $id)
             ->where('group', $request->group)
+            ->where('kode_bagian', $request->kode_bagian)
+            ->where('kode_jabatan', $request->kode_jabatan)
+            ->where('shift', $request->shift)
             ->where(function ($query) use ($request) {
                 $query->whereBetween('start_date', [$request->start_date, $request->end_date])
-                    ->orWhereBetween('end_date', [$request->start_date, $request->end_date]);
+                    ->orWhereBetween('end_date', [$request->start_date, $request->end_date])
+                    ->orWhere(function ($q) use ($request) {
+                        $q->where('start_date', '<=', $request->start_date)
+                            ->where('end_date', '>=', $request->end_date);
+                    });
             })
             ->exists();
 
         if ($exists) {
-            return response()->json(['message' => 'Planning untuk tanggal dan grup ini sudah ada.'], 422);
+            return response()->json(['message' => 'Planning sudah ada untuk kombinasi Group, Kode Bagian, Kode Jabatan, dan Shift di tanggal tersebut.'], 422);
         }
 
         $planning = Planning::findOrFail($id);

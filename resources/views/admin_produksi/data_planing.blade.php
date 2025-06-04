@@ -207,7 +207,7 @@
                                 <option value="1">1</option>
                                 <option value="2">2</option>
                                 <option value="3">3</option>
-                                
+
                             </select>
                         </div>
                         <div class="mb-3">
@@ -216,6 +216,24 @@
                                 <option disabled selected>Pilih Group</option>
                                 @foreach ($groups as $group)
                                 <option value="{{ $group }}">{{ $group }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label>Kode Jabatan</label>
+                            <select name="kode_jabatan" id="edit-jabatan" class="form-control" required place>
+                                <option disabled selected>Pilih Jabatan</option>
+                                @foreach ($kodeJabatans as $jabatan)
+                                <option value="{{ $jabatan }}">{{ $jabatan }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label>Kode Bagian</label>
+                            <select name="kode_bagian" id="edit-bagian" class="form-control" required place>
+                                <option disabled selected>Pilih Bagian</option>
+                                @foreach ($kodeBagians as $bagian)
+                                <option value="{{ $bagian }}">{{ $bagian }}</option>
                                 @endforeach
                             </select>
                         </div>
