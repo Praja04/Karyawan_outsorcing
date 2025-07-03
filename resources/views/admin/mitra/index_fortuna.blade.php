@@ -54,24 +54,54 @@
                                 </div>
                             </div>
                             <div class="col-sm-auto ms-auto">
-                                <div class="hstack gap-2">
-                                    <button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#uploadWaModal">
-                                        Update Nomor WhatsApp
+                                <div class="dropdown d-inline-block me-2">
+                                    <button class="btn btn-secondary dropdown-toggle" type="button" id="templateDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                        Template
                                     </button>
-
-                                    <a href="{{ route('download.templateData') }}" class="btn btn-info">
-                                        Download Template Data Karyawan
-                                    </a>
-
-                                    <a href="{{ route('download.templateWa') }}" class="btn btn-secondary">
-                                        Download Template Nomor WA
-                                    </a>
-                                    <button type="button" class="btn btn-primary add-btn" id="btnAdd"><i class="ri-add-line align-bottom me-1"></i> Add Karyawan</button>
-
-                                    <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#uploadModal">
-                                        Upload Excel
+                                    <ul class="dropdown-menu" aria-labelledby="templateDropdown">
+                                        <li>
+                                            <a href="{{ url('admin/download-template') }}" class="dropdown-item text-dark d-flex align-items-center gap-2">
+                                                <i class="ri-file-list-3-line"></i> Data Karyawan
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a href="{{ route('download.templateWa') }}" class="dropdown-item text-success d-flex align-items-center gap-2">
+                                                <i class="ri-whatsapp-line"></i> Nomor WhatsApp
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a href="{{ route('download.templateTelegram') }}" class="dropdown-item text-primary d-flex align-items-center gap-2">
+                                                <i class="ri-telegram-line"></i> Username Telegram
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <div class="dropdown d-inline-block">
+                                    <button class="btn btn-primary dropdown-toggle" type="button" id="uploadDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                        Upload / Update
                                     </button>
-
+                                    <ul class="dropdown-menu" aria-labelledby="uploadDropdown">
+                                        <li>
+                                            <button class="dropdown-item text-success d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#uploadWaModal">
+                                                <i class="ri-whatsapp-line"></i> Update Nomor WhatsApp
+                                            </button>
+                                        </li>
+                                        <li>
+                                            <button class="dropdown-item text-primary d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#uploadTeleModal">
+                                                <i class="ri-telegram-line"></i> Update Username Telegram
+                                            </button>
+                                        </li>
+                                        <li>
+                                            <button class="dropdown-item text-warning d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#uploadModal">
+                                                <i class="ri-upload-cloud-2-line"></i> Upload Data karyawan
+                                            </button>
+                                        </li>
+                                        <li>
+                                            <button class="dropdown-item text-info d-flex align-items-center gap-2" id="btnAdd">
+                                                <i class="ri-user-add-line"></i> Add Karyawan
+                                            </button>
+                                        </li>
+                                    </ul>
                                 </div>
                             </div>
                         </div>
@@ -108,6 +138,7 @@
                                             <th>Kode Jabatan</th>
                                             <th>Begin Date</th>
                                             <th>Tanggal Masuk</th>
+                                            <th>Username Telegram</th>
                                         </tr>
                                     </thead>
                                     <tbody></tbody>
@@ -325,11 +356,38 @@
                 </form>
             </div>
         </div>
+        <div class="modal fade" id="uploadTeleModal" tabindex="-1" aria-labelledby="uploadTeleModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <form id="uploadTeleForm" enctype="multipart/form-data">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="uploadTeleModalLabel">Upload Username Telegram dari Excel</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+
+                            <div class="mb-3">
+                                <label for="file" class="form-label">Pilih File Excel (.xlsx/.xls)</label>
+                                <input type="file" name="file" class="form-control" required accept=".xlsx,.xls">
+                            </div>
+
+                            <div id="uploadResultTele" class="mt-2"></div>
+
+                        </div>
+                        <div class="modal-footer">
+                            <button type="submit" class="btn btn-success">Upload & Update</button>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
 
     </div>
 </div>
 <script>
-    $(function() {
+    $(document).ready(function() {
+
         $.ajaxSetup({
             headers: {
                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -394,7 +452,8 @@
                 <td>${emp.kode_jabatan}</td>
                 <td>${emp.begin_date}</td>
                 <td>${emp.tanggal_masuk}</td>  
-                
+                 <td>${emp.username_telegram? emp.username_telegram: '<span class="text-danger">belum ada</span>'}</td>
+       
             </tr>`;
             });
 
@@ -503,7 +562,7 @@
             $('[name="kode_jabatan"]').val(emp.kode_jabatan);
             $('[name="begin_date"]').val(emp.begin_date);
             $('[name="tanggal_masuk"]').val(emp.tanggal_masuk);
-
+            $('[name="username_telegram"]').val(emp.username_telegram || '');
             $('#employeeModal').modal('show');
         });
 
@@ -652,7 +711,8 @@
             <td>${emp.kode_jabatan}</td>
             <td>${emp.begin_date}</td>
             <td>${emp.tanggal_masuk}</td>  
-            
+             <td>${emp.username_telegram? emp.username_telegram: '<span class="text-danger">belum ada</span>'}</td>
+       
         </tr>`;
             });
 
@@ -705,6 +765,47 @@
                 error: function(xhr) {
                     let msg = xhr.responseJSON?.message ?? 'Terjadi kesalahan saat upload.';
                     $('#uploadResult').html('<div class="alert alert-danger">' + msg + '</div>');
+                }
+            });
+        });
+
+        $('#uploadTeleForm').on('submit', function(e) {
+            e.preventDefault();
+
+            let formData = new FormData(this);
+            $('#uploadResultTele').html('<div class="text-info">Mengunggah dan memproses file...</div>');
+
+            $.ajax({
+                url: "{{url('/admin/employee/template-telegram')}}",
+                method: 'POST',
+                data: formData,
+                contentType: false,
+                processData: false,
+                success: function(res) {
+                    if (res.status === 'success') {
+                        let message = `<div class="alert alert-success">
+                        <strong>Berhasil update:</strong> ${res.updated} data.<br>`;
+                        if (res.errors.length) {
+                            message += `<strong>Error (${res.errors.length}):</strong><ul>`;
+                            res.errors.forEach(err => message += `<li>${err}</li>`);
+                            message += `</ul>`;
+                        }
+                        message += `</div>`;
+                        $('#uploadResultTele').html(message);
+                        //buatkan set interval 3 detik
+                        setInterval(function() {
+                            $('#uploadResultTele').html('');
+                            location.reload();
+                        }, 3000);
+
+
+                    } else {
+                        $('#uploadResultTele').html('<div class="alert alert-danger">Gagal: ' + res.message + '</div>');
+                    }
+                },
+                error: function(xhr) {
+                    let msg = xhr.responseJSON?.message ?? 'Terjadi kesalahan saat upload.';
+                    $('#uploadResultTele').html('<div class="alert alert-danger">' + msg + '</div>');
                 }
             });
         });

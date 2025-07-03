@@ -56,7 +56,7 @@
                                         <td class="status-konfirmasi">
                                             @if ($plot->status_konfirmasi === 'hadir')
                                             <span class="badge bg-success">Hadir</span>
-                                            @elseif ($plot->status_konfirmasi === 'tidak')
+                                            @elseif ($plot->status_konfirmasi === 'tidak hadir')
                                             <span class="badge bg-danger">Tidak Hadir</span>
                                             @else
                                             <span class="badge bg-secondary">Belum Konfirmasi</span>

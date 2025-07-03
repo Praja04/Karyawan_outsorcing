@@ -93,6 +93,17 @@
                             <input type="hidden" name="shift" value="{{ $planning->shift }}">
                             {{-- Table Karyawan --}}
                             <div class="mb-2">
+                                <div class="btn-group" role="group" aria-label="Filter Grup">
+                                    <button type="button" class="btn btn-outline-primary filter-btn active" data-group="all">Semua</button>
+                                    @php
+                                    $uniqueGroups = $employees->pluck('grup')->filter()->unique();
+                                    @endphp
+                                    @foreach($uniqueGroups as $group)
+                                    <button type="button" class="btn btn-outline-primary filter-btn" data-group="{{ $group }}">{{ $group }}</button>
+                                    @endforeach
+                                </div>
+                            </div>
+                            <div class="mb-2">
                                 <input type="text" class="form-control table-search" placeholder="Cari karyawan...">
                             </div><br>
                             <div class="table-responsive table-card mb-4" style="max-height: 200px; overflow-y: auto;">
@@ -106,6 +117,7 @@
                                             </th>
                                             <th>NIK OS</th>
                                             <th>Nama</th>
+                                            <th>Grup</th>
                                         </tr>
                                     </thead>
                                     <tbody class="list form-check-all">
@@ -119,6 +131,7 @@
                                             </td>
                                             <td>{{ $emp->nik_os }}</td>
                                             <td>{{ $emp->nama_karyawan }}</td>
+                                            <td>{{ $emp->grup }}</td>
 
                                         </tr>
                                         @endforeach
@@ -266,9 +279,17 @@
 
                             <div class="mb-3">
                                 <label class="form-label">Tanggal Plotting</label>
-                                <input type="date" class="form-control" name="tanggal" id="edit-tanggal" required>
+                                <input type="date" class="form-control" name="tanggal" id="edit-tanggal" readonly>
                             </div>
-
+                            <div class="mb-2">
+                                <div class="btn-group mb-2" role="group" aria-label="Filter Grup">
+                                    <button type="button" class="btn btn-outline-primary modal-filter-btn active" data-group="all">Semua</button>
+                                    @php $modalGroups = $employees->pluck('grup')->filter()->unique(); @endphp
+                                    @foreach($modalGroups as $group)
+                                    <button type="button" class="btn btn-outline-primary modal-filter-btn" data-group="{{ $group }}">{{ $group }}</button>
+                                    @endforeach
+                                </div>
+                            </div>
                             <div class="mb-2">
                                 <input type="text" class="form-control search-edit modal-table-search" placeholder="Cari karyawan...">
                             </div>
@@ -280,6 +301,7 @@
                                             <th style="width: 40px;"></th>
                                             <th>NIK OS</th>
                                             <th>Nama</th>
+                                            <th>Grup</th>
                                         </tr>
                                     </thead>
                                     <tbody id="modalEmployeeList">
@@ -290,6 +312,7 @@
                                             </td>
                                             <td>{{ $emp->nik_os }}</td>
                                             <td>{{ $emp->nama_karyawan }}</td>
+                                            <td>{{ $emp->grup }}</td>
                                         </tr>
                                         @endforeach
                                     </tbody>
@@ -315,6 +338,33 @@
             headers: {
                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
             }
+        });
+
+        function filterRows(group, keyword) {
+            $("tbody tr").each(function() {
+                const nama = $(this).find("td").eq(2).text().toLowerCase();
+                const grup = $(this).find("td").eq(3).text().toLowerCase();
+
+                const matchGroup = group === "all" || grup === group;
+                const matchSearch = nama.includes(keyword);
+
+                $(this).toggle(matchGroup && matchSearch);
+            });
+        }
+
+        $(".filter-btn").on("click", function() {
+            $(".filter-btn").removeClass("active");
+            $(this).addClass("active");
+
+            const selectedGroup = $(this).data("group").toLowerCase();
+            const keyword = $(".table-search").val().toLowerCase();
+            filterRows(selectedGroup, keyword);
+        });
+
+        $(".table-search").on("input", function() {
+            const activeGroup = $(".filter-btn.active").data("group").toLowerCase();
+            const keyword = $(this).val().toLowerCase();
+            filterRows(activeGroup, keyword);
         });
 
         const max = "{{$planning->jumlah_karyawan}}";
@@ -631,6 +681,33 @@
         } else {
             $('.noresult').hide();
         }
+    });
+
+    function filterModalRows(group, keyword) {
+        $("#modalEmployeeList tr").each(function() {
+            const nama = $(this).find("td").eq(2).text().toLowerCase();
+            const grup = $(this).find("td").eq(3).text().toLowerCase();
+
+            const matchGroup = group === "all" || grup === group;
+            const matchSearch = nama.includes(keyword);
+
+            $(this).toggle(matchGroup && matchSearch);
+        });
+    }
+
+    $(".modal-filter-btn").on("click", function() {
+        $(".modal-filter-btn").removeClass("active");
+        $(this).addClass("active");
+
+        const group = $(this).data("group").toLowerCase();
+        const keyword = $(".modal-table-search").val().toLowerCase();
+        filterModalRows(group, keyword);
+    });
+
+    $(".modal-table-search").on("input", function() {
+        const group = $(".modal-filter-btn.active").data("group").toLowerCase();
+        const keyword = $(this).val().toLowerCase();
+        filterModalRows(group, keyword);
     });
 </script>
 

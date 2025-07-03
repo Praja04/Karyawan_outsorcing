@@ -13,7 +13,8 @@ class PlottingKehadiran extends Model
         'planning_id',
         'employee_id',
         'tanggal',
-        'status_konfirmasi', // optional: hadir/tidak/null
+        'status_konfirmasi', 
+        'otp'
     ];
 
     public function planning()

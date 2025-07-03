@@ -35,8 +35,10 @@ Route::prefix('admin')->group(function () {
     Route::post('/employees/import', [AdminController::class, 'import'])->name('employees.import');
     Route::post('/employees/update/wa', [AdminController::class, 'uploadNomorWaExcel'])->name('employees.update_wa');
     Route::get('/download-template', [AdminController::class, 'downloadTemplateUploadData'])->name('download.templateData');
+    Route::get('/download-template-telegram', [AdminController::class, 'downloadTemplateTelegram'])->name('download.templateTelegram');
     Route::get('/download-template-wa', [AdminController::class, 'downloadTemplateUpdateWA'])->name('download.templateWa');
     Route::post('/employee/template-wa', [AdminController::class, 'uploadNomorWaExcel'])->name('upload.templateWa');
+    Route::post('/employee/template-telegram', [AdminController::class, 'uploadTelegramExcel'])->name('upload.templateTelegram');
     Route::get('/planning/{id}/plotting', [AdminController::class, 'planningDetail'])->name('admin_hrd.plotting.show');
     // routes/web.php
     Route::get('/planning/{id}/detail', [AdminController::class, 'planningDetail'])->name('planning.detail');

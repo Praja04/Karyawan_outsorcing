@@ -35,6 +35,7 @@ class Employee extends Model
         'kode_jabatan',
         'begin_date',
         'tanggal_masuk',
+        'username_telegram','chat_id'
     ];
 
     public function user()

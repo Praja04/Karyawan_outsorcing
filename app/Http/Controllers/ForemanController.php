@@ -48,7 +48,8 @@ class ForemanController extends Controller
             ->get();
 
         // Ambil employees hanya dari grup yang sesuai
-        $employees = Employee::where('grup', $adminGroup)->get();
+        // $employees = Employee::where('grup', $adminGroup)->get();
+        $employees = Employee::get();
 
         // Jika ingin return JSON
         // return response()->json(['plannings' => $plannings, 'employees' => $employees]);
@@ -57,71 +58,162 @@ class ForemanController extends Controller
     }
 
 
+    // public function storePlotting(Request $request)
+    // {
+    //     $request->validate([
+    //         'planning_id' => 'required|exists:plannings,id',
+    //         'employee_ids' => 'required|array',
+    //     ]);
+
+    //     $planning = Planning::findOrFail($request->planning_id);
+
+    //     $existingPlottingCount = $planning->plottingKehadiran()->count();
+    //     $newPlottingCount = count($request->employee_ids);
+
+    //     if (($existingPlottingCount + $newPlottingCount) > $planning->jumlah_karyawan) {
+    //         return response()->json([
+    //             'status' => 'error',
+    //             'message' => 'Jumlah karyawan yang dipilih melebihi jumlah yang direncanakan.'
+    //         ], 422);
+    //     }
+
+    //     $bulkMessages = [];
+
+    //     foreach ($request->employee_ids as $empId) {
+    //         do {
+    //             $randomCode = strtoupper(substr(md5(uniqid()), 0, 6)); // contoh: 6 karakter acak
+    //             $otp = "P{$planning->id}-{$randomCode}";
+    //         } while (PlottingKehadiran::where('otp', $otp)->exists());
+
+    //         $planning->plottingKehadiran()->create([
+    //             'employee_id' => $empId,
+    //             'tanggal' => Carbon::today()->toDateString(),
+    //             'status_konfirmasi' => null,
+    //             'otp' => $otp,
+    //         ]);
+
+    //         $employee = Employee::find($empId);
+    //         if (!$employee || !$employee->nomor_hp) {
+    //             continue;
+    //         }
+
+    //         $nomorTujuan = preg_replace('/^0/', '62', preg_replace('/\D/', '', $employee->nomor_hp));
+    //         $message = "Halo *{$employee->nama_karyawan}*,\n"
+    //         . "Anda dijadwalkan masuk pada tanggal *{$planning->start_date} s.d {$planning->end_date}* shift *{$planning->shift}*.\n"
+    //         . "Silakan konfirmasi dengan membalas pesan:\n*HADIR {$otp}* atau *TIDAK HADIR {$otp}*";
+
+    //         $bulkMessages[] = [
+    //             'number' => $nomorTujuan,
+    //             'message' => $message
+    //         ];
+    //     }
+
+    //     // Kirim semua pesan sekaligus ke Node.js via /send-bulk
+    //     try {
+    //         Http::timeout(10)->post('http://10.11.11.10:3000/send-bulk', [
+    //             'messages' => $bulkMessages,
+    //             'delayMs' => 3000 // Opsional: delay antar pesan untuk keamanan
+    //         ]);
+    //     } catch (\Exception $e) {
+    //         Log::warning("Gagal kirim WA massal: " . $e->getMessage());
+    //     }
+
+    //     return response()->json([
+    //         'status' => 'success',
+    //         'message' => 'Plotting berhasil disimpan dan notifikasi dikirim.'
+    //     ]);
+    // }
     public function storePlotting(Request $request)
     {
         $request->validate([
-            'planning_id' => 'required|exists:plannings,id',
-            'employee_ids' => 'required|array',
+            'planning_id'   => 'required|exists:plannings,id',
+            'employee_ids'  => 'required|array',
         ]);
 
         $planning = Planning::findOrFail($request->planning_id);
+        $existingCount = $planning->plottingKehadiran()->count();
+        $newCount = count($request->employee_ids);
 
-        $existingPlottingCount = $planning->plottingKehadiran()->count();
-        $newPlottingCount = count($request->employee_ids);
-
-        if (($existingPlottingCount + $newPlottingCount) > $planning->jumlah_karyawan) {
+        if (($existingCount + $newCount) > $planning->jumlah_karyawan) {
             return response()->json([
-                'status' => 'error',
-                'message' => 'Jumlah karyawan yang dipilih melebihi jumlah yang direncanakan.'
+                'status'  => 'error',
+                'message' => 'Jumlah karyawan yang dipilih melebihi kapasitas planning.'
             ], 422);
         }
 
-        $bulkMessages = [];
+        $token = config('services.telegram.bot_token');
 
         foreach ($request->employee_ids as $empId) {
+            // Generate OTP unik
+            do {
+                $random = strtoupper(substr(md5(uniqid()), 0, 6));
+                $otp = "P{$planning->id}-{$random}";
+            } while (PlottingKehadiran::where('otp', $otp)->exists());
+
+            // Simpan plotting
             $planning->plottingKehadiran()->create([
-                'employee_id' => $empId,
-                'tanggal' => Carbon::today()->toDateString(),
-                'status_konfirmasi' => null,
+                'employee_id'        => $empId,
+                'tanggal'            => Carbon::today()->toDateString(),
+                'status_konfirmasi'  => null,
+                'otp'                => $otp,
             ]);
 
+            // Kirim notifikasi via Telegram
             $employee = Employee::find($empId);
-            if (!$employee || !$employee->nomor_hp) {
+            if (!$employee || !$employee->chat_id) {
                 continue;
             }
 
-            $nomorTujuan = preg_replace('/^0/', '62', preg_replace('/\D/', '', $employee->nomor_hp));
+            $message = "Halo *{$employee->nama_karyawan}*,\n"
+                . "Anda dijadwalkan kerja tanggal *{$planning->start_date->format('d M')} s.d {$planning->end_date->format('d M')}* (Shift *{$planning->shift}*).\n"
+                . "Balas dengan *HADIR {$otp}* atau *TIDAK HADIR {$otp}* untuk konfirmasi.";
 
-            $bulkMessages[] = [
-                'number' => $nomorTujuan,
-                'message' => "Halo *{$employee->nama_karyawan}*,\nAnda dijadwalkan masuk pada tanggal *" . $planning->start_date . " sampai " . $planning->end_date .  " shift : " . $planning->shift . "*.\nSilakan konfirmasi dengan membalas *Hadir* atau *Tidak Hadir*."
-            ];
-        }
-
-        // Kirim semua pesan sekaligus ke Node.js via /send-bulk
-        try {
-            Http::timeout(10)->post('http://10.11.11.10:3000/send-bulk', [
-                'messages' => $bulkMessages,
-                'delayMs' => 3000 // Opsional: delay antar pesan untuk keamanan
-            ]);
-        } catch (\Exception $e) {
-            Log::warning("Gagal kirim WA massal: " . $e->getMessage());
+            try {
+                Http::post("https://api.telegram.org/bot{$token}/sendMessage", [
+                    'chat_id'    => $employee->chat_id,
+                    'text'       => $message,
+                    'parse_mode' => 'Markdown'
+                ]);
+            } catch (\Exception $e) {
+                Log::warning("Gagal kirim ke Telegram ({$employee->chat_id}): " . $e->getMessage());
+            }
         }
 
         return response()->json([
-            'status' => 'success',
-            'message' => 'Plotting berhasil disimpan dan notifikasi dikirim.'
+            'status'  => 'success',
+            'message' => 'Plotting disimpan dan notifikasi Telegram dikirim.'
         ]);
     }
 
     public function viewPlotting(Planning $planning)
     {
         // Ambil hanya karyawan dari grup terkait
-        $employees = Employee::where('grup', $planning->group)->get();
-        // Ambil ID karyawan yang sudah di-plotting
+        // $employees = Employee::where('grup', $planning->group)->get();
+        //     $employees = Employee::get();
+        //     // Ambil ID karyawan yang sudah di-plotting
+        //     $plottingEmployeeIds = $planning->plottingKehadiran()->pluck('employee_id')->toArray();
+        //     $plottedEmployees = $planning->plottingKehadiran->pluck('employee_id')->toArray();
+        //     return view('staff_produksi.plotting', compact('planning', 'employees', 'plottedEmployees', 'plottingEmployeeIds'));
+        // 
+        // Ambil semua employee
+        $allEmployees = Employee::get();
+
+        // Ambil ID employee yang jadwal plotting-nya bertabrakan
+        $conflictedEmployeeIds = PlottingKehadiran::whereHas('planning', function ($query) use ($planning) {
+            $query->where(function ($q) use ($planning) {
+                $q->whereDate('start_date', '<=', $planning->end_date)
+                    ->whereDate('end_date', '>=', $planning->start_date);
+            });
+        })->pluck('employee_id')->unique();
+
+        // Ambil hanya karyawan yang TIDAK punya konflik tanggal
+        $employees = $allEmployees->whereNotIn('id', $conflictedEmployeeIds);
+
+        // Ambil ID karyawan yang sudah diplotting di planning ini (jika perlu ditandai di blade)
         $plottingEmployeeIds = $planning->plottingKehadiran()->pluck('employee_id')->toArray();
-        $plottedEmployees = $planning->plottingKehadiran->pluck('employee_id')->toArray();
-        return view('staff_produksi.plotting', compact('planning', 'employees', 'plottedEmployees', 'plottingEmployeeIds'));
+
+        return view('staff_produksi.plotting', compact('planning', 'employees', 'plottingEmployeeIds'));
+
     }
 
     public function deletePlotting($id)
