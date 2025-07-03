@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Employee;
 use App\Models\PlottingKehadiran;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 
 class KehadiranApiController extends Controller
@@ -47,10 +48,72 @@ class KehadiranApiController extends Controller
     //     return response()->json(['message' => 'Status kehadiran berhasil diperbarui']);
     // }
 
+    // public function konfirmasi(Request $request)
+    // {
+    //     $token = config('services.telegram.bot_token');
+    //     $response = Http::get("https://api.telegram.org/bot{$token}/getUpdates");
+
+    //     $updates = $response->json()['result'] ?? [];
+
+    //     foreach ($updates as $update) {
+    //         $messageText = strtolower($update['message']['text'] ?? '');
+    //         $chatId = $update['message']['chat']['id'] ?? null;
+
+    //         if (!$messageText || !$chatId) {
+    //             continue;
+    //         }
+
+    //         // Cek apakah pesan mengandung HADIR/TIDAK HADIR + OTP
+    //         if (preg_match('/^(hadir|tidak hadir)\s+(p[0-9]+-[a-z0-9]{6})$/i', $messageText, $match)) {
+    //             $status = strtolower($match[1]); // hadir / tidak hadir
+    //             $otp = strtoupper($match[2]);
+
+    //             $employee = Employee::where('chat_id', $chatId)->first();
+    //             if (!$employee) continue;
+
+    //             $plotting = PlottingKehadiran::where('employee_id', $employee->id)
+    //                 ->where('otp', $otp)
+    //                 ->first();
+
+    //             if (!$plotting) {
+    //                 Http::post("https://api.telegram.org/bot{$token}/sendMessage", [
+    //                     'chat_id' => $chatId,
+    //                     'text'    => "Maaf, OTP tidak ditemukan atau tidak valid.",
+    //                 ]);
+    //                 continue;
+    //             }
+
+    //             if ($plotting->status_konfirmasi !== null) {
+    //                 Http::post("https://api.telegram.org/bot{$token}/sendMessage", [
+    //                     'chat_id' => $chatId,
+    //                     'text'    => "OTP sudah digunakan sebelumnya untuk konfirmasi sebagai *{$plotting->status_konfirmasi}*.",
+    //                     'parse_mode' => 'Markdown',
+    //                 ]);
+    //                 continue;
+    //             }
+
+    //             $plotting->status_konfirmasi = $status;
+    //             $plotting->save();
+
+    //             Http::post("https://api.telegram.org/bot{$token}/sendMessage", [
+    //                 'chat_id' => $chatId,
+    //                 'text'    => "Terima kasih, status kamu tercatat sebagai *{$status}*.",
+    //                 'parse_mode' => 'Markdown'
+    //             ]);
+    //         }
+    //     }
+
+    //     return response()->json(['status' => 'Polling selesai']);
+    // }
     public function konfirmasi(Request $request)
     {
         $token = config('services.telegram.bot_token');
-        $response = Http::get("https://api.telegram.org/bot{$token}/getUpdates");
+
+        $lastUpdateId = Cache::get('telegram_last_update_id', 0);
+
+        $response = Http::get("https://api.telegram.org/bot{$token}/getUpdates", [
+            'offset' => $lastUpdateId + 1,
+        ]);
 
         $updates = $response->json()['result'] ?? [];
 
@@ -58,20 +121,17 @@ class KehadiranApiController extends Controller
             $messageText = strtolower($update['message']['text'] ?? '');
             $chatId = $update['message']['chat']['id'] ?? null;
 
-            if (!$messageText || !$chatId) {
-                continue;
-            }
+            if (!$messageText || !$chatId) continue;
 
-            // Cek apakah pesan mengandung HADIR/TIDAK HADIR + OTP
             if (preg_match('/^(hadir|tidak hadir)\s+(p[0-9]+-[a-z0-9]{6})$/i', $messageText, $match)) {
-                $status = strtolower($match[1]); // hadir / tidak hadir
+                $status = strtolower($match[1]);
                 $otp = strtoupper($match[2]);
 
                 $employee = Employee::where('chat_id', $chatId)->first();
                 if (!$employee) continue;
 
                 $plotting = PlottingKehadiran::where('employee_id', $employee->id)
-                    ->where('otp', $otp)
+                ->where('otp', $otp)
                     ->first();
 
                 if (!$plotting) {
@@ -100,10 +160,14 @@ class KehadiranApiController extends Controller
                     'parse_mode' => 'Markdown'
                 ]);
             }
+
+            // Update last update ID
+            Cache::put('telegram_last_update_id', $update['update_id'], now()->addMinutes(5));
         }
 
         return response()->json(['status' => 'Polling selesai']);
     }
+
 
     public function polling()
     {
