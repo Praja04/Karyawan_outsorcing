@@ -119,8 +119,15 @@ class KehadiranApiController extends Controller
         foreach ($updates as $update) {
             $messageText = strtolower($update['message']['text'] ?? '');
             $chatId = $update['message']['chat']['id'] ?? null;
+            $updateId = $update['update_id'];
 
             if (!$messageText || !$chatId) continue;
+
+            // Lewati pesan jika datang sebelum OTP dikirim oleh bot
+            $lastBotUpdate = Cache::get("last_bot_update_id_{$chatId}", 0);
+            if ($updateId <= $lastBotUpdate) {
+                continue;
+            }
 
             if (preg_match('/^(hadir|tidak hadir)\s+(p[0-9]+-[a-z0-9]{6})$/i', $messageText, $match)) {
                 $status = strtolower($match[1]);
@@ -138,13 +145,15 @@ class KehadiranApiController extends Controller
                         'chat_id' => $chatId,
                         'text'    => "Maaf, OTP tidak ditemukan atau tidak valid.",
                     ]);
+
+                    // Catat update_id balasan dari bot
+                    Cache::put("last_bot_update_id_{$chatId}", $updateId);
                     continue;
                 }
 
-                // Cegah balasan berulang jika OTP sudah pernah dikonfirmasi
                 $cacheKey = "otp_handled_{$chatId}_{$otp}";
                 if (Cache::get($cacheKey)) {
-                    continue; // Sudah pernah dibalas, skip
+                    continue;
                 }
 
                 if ($plotting->status_konfirmasi !== null) {
@@ -154,6 +163,7 @@ class KehadiranApiController extends Controller
                         'parse_mode' => 'Markdown',
                     ]);
                     Cache::put($cacheKey, true, now()->addMinutes(10));
+                    Cache::put("last_bot_update_id_{$chatId}", $updateId);
                     continue;
                 }
 
@@ -167,10 +177,10 @@ class KehadiranApiController extends Controller
                 ]);
 
                 Cache::put($cacheKey, true, now()->addMinutes(10));
+                Cache::put("last_bot_update_id_{$chatId}", $updateId);
             }
 
-            // Update last update ID
-            Cache::put('telegram_last_update_id', $update['update_id'], now()->addMinutes(5));
+            Cache::put('telegram_last_update_id', $updateId, now()->addMinutes(5));
         }
 
         return response()->json(['status' => 'Polling selesai']);
