@@ -108,7 +108,6 @@ class KehadiranApiController extends Controller
     public function konfirmasi(Request $request)
     {
         $token = config('services.telegram.bot_token');
-
         $lastUpdateId = Cache::get('telegram_last_update_id', 0);
 
         $response = Http::get("https://api.telegram.org/bot{$token}/getUpdates", [
@@ -131,7 +130,7 @@ class KehadiranApiController extends Controller
                 if (!$employee) continue;
 
                 $plotting = PlottingKehadiran::where('employee_id', $employee->id)
-                ->where('otp', $otp)
+                    ->where('otp', $otp)
                     ->first();
 
                 if (!$plotting) {
@@ -142,12 +141,19 @@ class KehadiranApiController extends Controller
                     continue;
                 }
 
+                // Cegah balasan berulang jika OTP sudah pernah dikonfirmasi
+                $cacheKey = "otp_handled_{$chatId}_{$otp}";
+                if (Cache::get($cacheKey)) {
+                    continue; // Sudah pernah dibalas, skip
+                }
+
                 if ($plotting->status_konfirmasi !== null) {
                     Http::post("https://api.telegram.org/bot{$token}/sendMessage", [
                         'chat_id' => $chatId,
                         'text'    => "OTP sudah digunakan sebelumnya untuk konfirmasi sebagai *{$plotting->status_konfirmasi}*.",
                         'parse_mode' => 'Markdown',
                     ]);
+                    Cache::put($cacheKey, true, now()->addMinutes(10));
                     continue;
                 }
 
@@ -159,6 +165,8 @@ class KehadiranApiController extends Controller
                     'text'    => "Terima kasih, status kamu tercatat sebagai *{$status}*.",
                     'parse_mode' => 'Markdown'
                 ]);
+
+                Cache::put($cacheKey, true, now()->addMinutes(10));
             }
 
             // Update last update ID
