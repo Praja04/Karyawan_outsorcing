@@ -60,17 +60,17 @@
                                     </button>
                                     <ul class="dropdown-menu" aria-labelledby="templateDropdown">
                                         <li>
-                                            <a href="{{ url('admin/download-template') }}" class="dropdown-item text-dark d-flex align-items-center gap-2">
+                                            <a href="#" class="dropdown-item text-dark d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#infoModal" data-url="{{ url('admin/download-template') }}">
                                                 <i class="ri-file-list-3-line"></i> Data Karyawan
                                             </a>
                                         </li>
                                         <li>
-                                            <a href="{{ route('download.templateWa') }}" class="dropdown-item text-success d-flex align-items-center gap-2">
+                                            <a href="#" class="dropdown-item text-success d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#infoModal" data-url="{{ route('download.templateWa') }}">
                                                 <i class="ri-whatsapp-line"></i> Nomor WhatsApp
                                             </a>
                                         </li>
                                         <li>
-                                            <a href="{{ route('download.templateTelegram') }}" class="dropdown-item text-primary d-flex align-items-center gap-2">
+                                            <a href="#" class="dropdown-item text-primary d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#infoModal" data-url="{{ route('download.templateTelegram') }}">
                                                 <i class="ri-telegram-line"></i> Username Telegram
                                             </a>
                                         </li>
@@ -383,6 +383,43 @@
             </div>
         </div>
 
+        <div class="modal fade" id="infoModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Ketentuan Upload</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <ul class="mb-0">
+                            <h5><i class="ri-file-user-line text-dark me-1"></i> Ketentuan Template Data Karyawan</h5>
+                            <li><i class="ri-check-line text-success me-1"></i> Gunakan format file yang sesuai dengan template yang telah disediakan.</li>
+                            <li><i class="ri-user-line text-warning me-1"></i> Kolom <strong>Jenis Kelamin</strong> hanya diisi dengan huruf <strong>L</strong> (Laki-laki) atau <strong>P</strong> (Perempuan).</li>
+                            <li><i class="ri-telegram-line text-primary me-1"></i> Username Telegram ditulis tanpa simbol <strong>@</strong> (misalnya: <em>Raja_Damang</em>).</li>
+                            <li><i class="ri-id-card-line text-info me-1"></i> Pastikan kolom penting seperti <strong>ID dan Kontak</strong> diisi dengan benar dan lengkap.</li>
+
+                            <hr>
+
+                            <h5><i class="ri-whatsapp-line text-success me-1"></i> Ketentuan Template Nomor WhatsApp</h5>
+                            <li><i class="ri-check-line text-success me-1"></i> Nomor <strong>KTP</strong> harus sesuai dengan data identitas yang valid.</li>
+                            <li><i class="ri-phone-line text-success me-1"></i> Nomor WhatsApp harus menggunakan awalan <strong>62</strong> (bukan <strong>0</strong>).</li>
+
+                            <hr>
+
+                            <h5><i class="ri-telegram-line text-primary me-1"></i> Ketentuan Template Telegram</h5>
+                            <li><i class="ri-check-line text-success me-1"></i> Nomor <strong>NIK OS</strong> wajib sesuai dengan data yang tersedia.</li>
+                            <li><i class="ri-user-line text-primary me-1"></i> Username Telegram ditulis tanpa simbol <strong>@</strong> (misalnya: <em>Raja_Damang</em>).</li>
+                        </ul>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                        <a href="#" id="confirmDownload" class="btn btn-primary">Lanjutkan Download</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
 </div>
 <script>
@@ -392,6 +429,12 @@
             headers: {
                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
             }
+        });
+
+        $('#infoModal').on('show.bs.modal', function(event) {
+            var triggerLink = $(event.relatedTarget);
+            var url = triggerLink.data('url');
+            $('#confirmDownload').attr('href', url);
         });
 
         const baseUrl = "{{ url('/admin/employees') }}";
