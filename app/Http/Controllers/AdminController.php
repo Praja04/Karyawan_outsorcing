@@ -230,6 +230,7 @@ class AdminController extends Controller
                 'kode_jabatan' => $row[21],
                 'begin_date' => $this->convertExcelDate($row[22]),
                 'tanggal_masuk' => $this->convertExcelDate($row[23]),
+                'username_telegram' => $row[24],
             ];
 
             $validator = Validator::make($data, [
