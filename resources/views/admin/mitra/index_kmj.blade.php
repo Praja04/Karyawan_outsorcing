@@ -194,7 +194,7 @@
                                     </div>
                                     <div class="form-group">
                                         <label>Nama Vendor</label>
-                                        <input type="text" name="nama_vendor" class="form-control">
+                                        <input type="text" name="nama_vendor" class="form-control" value="KMJ" readonly>
                                     </div>
                                     <div class="form-group">
                                         <label>NIK OS</label>
@@ -288,6 +288,10 @@
                                     <div class="form-group">
                                         <label>Tanggal Masuk</label>
                                         <input type="date" name="tanggal_masuk" class="form-control">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Username Telegram</label>
+                                        <input type="text" name="username_telegram" class="form-control">
                                     </div>
                                 </div>
                             </div>
