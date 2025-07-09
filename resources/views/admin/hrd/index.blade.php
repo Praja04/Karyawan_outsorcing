@@ -271,7 +271,7 @@
                                     </div>
                                     <div class="form-group">
                                         <label>Grup</label>
-                                        <input type="text" name="grup" class="form-control">
+                                        <input type="text" name="grup" class="form-control" placeholder="diawali kata GRUP">
                                     </div>
                                     <div class="form-group">
                                         <label>Kode Bagian</label>
@@ -402,6 +402,7 @@
                             <li><i class="ri-user-line text-warning me-1"></i> Kolom <strong>Jenis Kelamin</strong> hanya diisi dengan huruf <strong>L</strong> (Laki-laki) atau <strong>P</strong> (Perempuan).</li>
                             <li><i class="ri-telegram-line text-primary me-1"></i> Username Telegram ditulis tanpa simbol <strong>@</strong> (misalnya: <em>Raja_Damang</em>).</li>
                             <li><i class="ri-id-card-line text-info me-1"></i> Pastikan kolom penting seperti <strong>ID dan Kontak</strong> diisi dengan benar dan lengkap.</li>
+                            <li><i class="ri-id-card-line text-info me-1"></i> Pastikan kolom <strong>Grup</strong> diisi dengan GRUP(spasi)nama_grup (misalnya: <em>GRUP A</em>).</li>
 
                             <hr>
 

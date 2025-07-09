@@ -118,6 +118,7 @@
                                             <th>NIK OS</th>
                                             <th>Nama</th>
                                             <th>Grup</th>
+                                            <th>Vendor</th>
                                         </tr>
                                     </thead>
                                     <tbody class="list form-check-all">
@@ -132,6 +133,7 @@
                                             <td>{{ $emp->nik_os }}</td>
                                             <td>{{ $emp->nama_karyawan }}</td>
                                             <td>{{ $emp->grup }}</td>
+                                            <td>{{ $emp->nama_vendor }}</td>
 
                                         </tr>
                                         @endforeach
