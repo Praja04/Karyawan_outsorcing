@@ -169,6 +169,22 @@
         $('#searchKaryawan').on('keypress', function(e) {
             if (e.which === 13) filterKaryawan();
         });
+
+        $('.nav-link[data-bs-toggle="tab"]').on('shown.bs.tab', function(e) {
+            const targetTab = $(e.target).attr('href').replace('#', '') + 'Table';
+
+            let dataToRender = [];
+
+            if (targetTab === 'tabAllTable') {
+                dataToRender = tables.tabAllTable;
+            } else if (targetTab === 'tabKMJTable') {
+                dataToRender = tables.tabKMJTable;
+            } else if (targetTab === 'tabFortunaTable') {
+                dataToRender = tables.tabFortunaTable;
+            }
+
+            paginate(targetTab, dataToRender);
+        });
     });
     $('#newStatus').on('change', function() {
         const val = $(this).val();
@@ -246,7 +262,7 @@
             tabFortunaTable: []
         };
 
-        const itemsPerPage = 10;
+        const itemsPerPage = 20;
         let currentPage = 1;
 
         function paginate(tableId, rows) {
