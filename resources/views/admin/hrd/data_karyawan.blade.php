@@ -167,6 +167,8 @@
         tabKMJTable: [],
         tabFortunaTable: []
     };
+    let currentPage = 1; // Move currentPage outside of renderKaryawan
+
     $(document).ready(function() {
         loadKaryawanData();
 
@@ -177,7 +179,6 @@
 
         $('.nav-link[data-bs-toggle="tab"]').on('shown.bs.tab', function(e) {
             const targetTab = $(e.target).attr('href').replace('#', '') + 'Table';
-
             let dataToRender = [];
 
             if (targetTab === 'tabAllTable') {
@@ -191,6 +192,7 @@
             paginate(targetTab, dataToRender);
         });
     });
+
     $('#newStatus').on('change', function() {
         const val = $(this).val();
         if (val === 'non aktif' || val === 'terminated') {
@@ -207,6 +209,7 @@
             renderKaryawan(data);
         });
     }
+
     $(document).on('click', '.btn-ubah-status', function() {
         const id = $(this).data('id');
         const nama = $(this).data('nama');
@@ -260,35 +263,35 @@
         renderKaryawan(filtered);
     }
 
+    function paginate(tableId, rows) {
+        const itemsPerPage = 20;
+        const totalPages = Math.ceil(rows.length / itemsPerPage);
+        const start = (currentPage - 1) * itemsPerPage;
+        const end = start + itemsPerPage;
+        const currentRows = rows.slice(start, end);
+
+        $(`#${tableId} tbody`).html(currentRows.join(''));
+
+        const pagination = [];
+        for (let i = 1; i <= totalPages; i++) {
+            pagination.push(`<button class="page-btn btn btn-sm btn-outline-primary mx-1 ${i === currentPage ? 'active' : ''}" data-page="${i}">${i}</button>`);
+        }
+
+        $('#paginationWrapper').html(pagination.join(''));
+
+        $('.page-btn').on('click', function() {
+            currentPage = Number($(this).data('page'));
+            paginate(tableId, rows);
+        });
+    }
+
     function renderKaryawan(data) {
         tables = {
             tabAllTable: [],
             tabKMJTable: [],
             tabFortunaTable: []
         };
-        const itemsPerPage = 20;
-        let currentPage = 1;
-
-        function paginate(tableId, rows) {
-            const totalPages = Math.ceil(rows.length / itemsPerPage);
-            const start = (currentPage - 1) * itemsPerPage;
-            const end = start + itemsPerPage;
-            const currentRows = rows.slice(start, end);
-
-            $(`#${tableId} tbody`).html(currentRows.join(''));
-
-            const pagination = [];
-            for (let i = 1; i <= totalPages; i++) {
-                pagination.push(`<button class="page-btn btn btn-sm btn-outline-primary mx-1 ${i === currentPage ? 'active' : ''}" data-page="${i}">${i}</button>`);
-            }
-
-            $('#paginationWrapper').html(pagination.join(''));
-
-            $('.page-btn').on('click', function() {
-                currentPage = Number($(this).data('page'));
-                paginate(tableId, rows);
-            });
-        }
+        currentPage = 1; // Reset currentPage when rendering new data
 
         if (!data.length) {
             $('.noresult').show();
@@ -323,4 +326,5 @@
         paginate('tabAllTable', tables.tabAllTable); // You can adapt this for other tabs as well
     }
 </script>
+
 @endsection
