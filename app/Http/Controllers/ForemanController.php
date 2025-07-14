@@ -187,16 +187,8 @@ class ForemanController extends Controller
 
     public function viewPlotting(Planning $planning)
     {
-        // Ambil hanya karyawan dari grup terkait
-        // $employees = Employee::where('grup', $planning->group)->get();
-        //     $employees = Employee::get();
-        //     // Ambil ID karyawan yang sudah di-plotting
-        //     $plottingEmployeeIds = $planning->plottingKehadiran()->pluck('employee_id')->toArray();
-        //     $plottedEmployees = $planning->plottingKehadiran->pluck('employee_id')->toArray();
-        //     return view('staff_produksi.plotting', compact('planning', 'employees', 'plottedEmployees', 'plottingEmployeeIds'));
-        // 
-        // Ambil semua employee
-        $allEmployees = Employee::get();
+      
+        $allEmployees = Employee::get()->where('status', 'aktif');
 
         // Ambil ID employee yang jadwal plotting-nya bertabrakan
         $conflictedEmployeeIds = PlottingKehadiran::whereHas('planning', function ($query) use ($planning) {

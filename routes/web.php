@@ -23,6 +23,9 @@ Route::prefix('admin')->group(function () {
     // hrd Bas
     Route::get('/kelola/karyawan', [AdminController::class, 'index']);
     Route::get('/dashboard', [AdminController::class, 'dashboard']);
+    Route::get('/data_karyawan', [AdminController::class, 'data_karyawan']);
+    Route::get('/data_karyawan/kmj', [AdminController::class, 'data_karyawan_kmj']);
+    Route::get('/data_karyawan/fortuna', [AdminController::class, 'data_karyawan_fortuna']);
     Route::get('/plotting/prd', [AdminController::class, 'plot_prd']);
 
     // CRUD management karyawan
@@ -30,6 +33,7 @@ Route::prefix('admin')->group(function () {
     Route::get('/employees/kmj', [AdminController::class, 'getKaryawan_KMJ']);
     Route::get('/employees/fortuna', [AdminController::class, 'getKaryawan_Fortuna']);
     Route::post('/employees', [AdminController::class, 'store']);
+    Route::post('/update/status/{id}', [AdminController::class, 'updateStatusKaryawan']);
     Route::put('/employees/{id}', [AdminController::class, 'update']);
     Route::delete('/employees/{id}', [AdminController::class, 'destroy']);
     Route::post('/employees/import', [AdminController::class, 'import'])->name('employees.import');

@@ -35,7 +35,9 @@ class Employee extends Model
         'kode_jabatan',
         'begin_date',
         'tanggal_masuk',
-        'username_telegram','chat_id'
+        'username_telegram','chat_id',
+        'status',
+        'reason', // Alasan perubahan status
     ];
 
     public function user()

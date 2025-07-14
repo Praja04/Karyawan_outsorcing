@@ -39,6 +39,30 @@ class AdminController extends Controller
         }
         return view('admin.hrd.index');
     }
+    public function data_karyawan()
+    {
+        // cek apakah user punya session login true dan session username
+        if (!session('login') || !session('username')) {
+            return redirect('/login');
+        }
+        return view('admin.hrd.data_karyawan');
+    }
+    public function data_karyawan_kmj()
+    {
+        // cek apakah user punya session login true dan session username
+        if (!session('login') || !session('username')) {
+            return redirect('/login');
+        }
+        return view('admin.mitra.data_karyawan_kmj');
+    }
+    public function data_karyawan_fortuna()
+    {
+        // cek apakah user punya session login true dan session username
+        if (!session('login') || !session('username')) {
+            return redirect('/login');
+        }
+        return view('admin.mitra.data_karyawan_fortuna');
+    }
     public function index_kmj()
     {
         // cek apakah user punya session login true dan session username
@@ -171,6 +195,43 @@ class AdminController extends Controller
             'message' => 'Employee updated successfully.',
             'data' => $employee
         ]);
+    }
+
+    public function updateStatusKaryawan(Request $request, $id)
+    {
+        // Validasi input
+        $request->validate([
+            'new_status' => 'required|in:aktif,non aktif,terminated',
+            'reason' => 'nullable|string|max:200'
+        ]);
+
+        try {
+            $karyawan = Employee::findOrFail($id);
+
+            // Jika status non aktif atau terminated, pastikan alasan diisi
+            if (in_array($request->new_status, ['non aktif', 'terminated']) && empty($request->reason)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Alasan wajib diisi jika status bukan Aktif.'
+                ], 422);
+            }
+
+            $karyawan->update([
+                'status' => $request->new_status,
+                // Tambahkan kolom log jika tersedia, misalnya status_reason
+                // 'status_reason' => $request->reason
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Status karyawan berhasil diperbarui.'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     // DELETE: Hapus karyawan

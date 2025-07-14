@@ -36,13 +36,21 @@
                         <i class="mdi mdi-card-account-details"></i> <span data-key="t-widgets">Manage Karyawan</span>
                     </a>
                 </li>
-               
-                <li class="menu-title"><i class="ri-more-fill"></i> <span data-key="t-pages">Lainnya</span></li>
+                <li class="nav-item">
+                    <a class="nav-link menu-link" href="{{ url('admin/data_karyawan') }}">
+                        <i class="mdi mdi-card-account-details"></i> <span data-key="t-widgets">Data Karyawan</span>
+                    </a>
+                </li>
                 @elseif(Session::get('user_role') === 'admin_hrd_mitra_kmj' )
                 <li class="menu-title"><span data-key="t-menu">Menu</span></li>
                 <li class="nav-item">
                     <a class="nav-link menu-link" href="{{ url('admin/hrd/mitra/kmj') }}">
                         <i class="mdi mdi-card-account-details"></i> <span data-key="t-widgets">Manage Karyawan</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link menu-link" href="{{ url('admin/data_karyawan/kmj') }}">
+                        <i class="mdi mdi-card-account-details"></i> <span data-key="t-widgets">Data Karyawan</span>
                     </a>
                 </li>
                 @elseif(Session::get('user_role') === 'admin_hrd_mitra_fortuna' )
@@ -52,7 +60,11 @@
                         <i class="mdi mdi-card-account-details"></i> <span data-key="t-widgets">Manage Karyawan</span>
                     </a>
                 </li>
-                <li class="menu-title"><i class="ri-more-fill"></i> <span data-key="t-pages">Lainnya</span></li>
+                <li class="nav-item">
+                    <a class="nav-link menu-link" href="{{ url('admin/data_karyawan/fortuna') }}">
+                        <i class="mdi mdi-card-account-details"></i> <span data-key="t-widgets">Data Karyawan</span>
+                    </a>
+                </li>
                 @elseif(Session::get('user_role') === 'admin_produksi' )
                 <li class="menu-title"><span data-key="t-menu">Menu</span></li>
 
