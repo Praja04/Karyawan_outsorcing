@@ -126,6 +126,7 @@
                                     @endforelse
                                 </tbody>
                             </table>
+                            <ul class="pagination listjs-pagination mb-0" id="planningPagination"></ul>
                             <div class="noresult" style="display: none">
                                 <div class="text-center">
                                     <lord-icon src="https://cdn.lordicon.com/msoeawqm.json" trigger="loop" colors="primary:#121331,secondary:#08a88a" style="width:75px;height:75px">
@@ -135,17 +136,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="d-flex justify-content-end mt-2">
-                            <div class="pagination-wrap hstack gap-2">
-                                <a class="page-item pagination-prev disabled" href="#">
-                                    Previous
-                                </a>
-                                <ul class="pagination listjs-pagination mb-0"></ul>
-                                <a class="page-item pagination-next" href="#">
-                                    Next
-                                </a>
-                            </div>
-                        </div>
+                       
 
                         <!-- Modal -->
                         <div class="modal fade flip" id="deleteOrder" tabindex="-1" aria-hidden="true">
@@ -347,30 +338,69 @@
             }
         });
     });
-
+</script>
+<script>
     $(document).ready(function() {
-        $('.search').on('keyup', function() {
-            let keyword = $(this).val().toLowerCase();
-            let found = false;
+        let allRows = Array.from($('#ticket-list-data tr'));
+        let filteredRows = [...allRows];
+        const perPage = 3;
+        let currentPage = 1;
+        const $tableBody = $('#ticket-list-data');
+        const $pagination = $('#planningPagination');
 
-            $('#ticket-list-data tr').each(function() {
-                let rowText = $(this).text().toLowerCase();
+        function renderTable() {
+            const totalPages = Math.ceil(filteredRows.length / perPage);
+            const start = (currentPage - 1) * perPage;
+            const end = start + perPage;
+            $tableBody.empty().append(filteredRows.slice(start, end));
 
-                if (rowText.indexOf(keyword) > -1) {
-                    $(this).show();
-                    found = true;
-                } else {
-                    $(this).hide();
+            $('.noresult').toggle(filteredRows.length === 0);
+
+            $pagination.empty();
+            if (totalPages <= 1) return;
+
+            let buttons = [];
+
+            buttons.push(`
+                <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                    <a class="page-link page-btn" href="#" data-page="${currentPage - 1}">Previous</a>
+                </li>
+            `);
+
+            for (let i = 1; i <= totalPages; i++) {
+                buttons.push(`
+                    <li class="page-item ${i === currentPage ? 'active' : ''}">
+                        <a class="page-link page-btn" href="#" data-page="${i}">${i}</a>
+                    </li>
+                `);
+            }
+
+            buttons.push(`
+                <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+                    <a class="page-link page-btn" href="#" data-page="${currentPage + 1}">Next</a>
+                </li>
+            `);
+
+            $pagination.html(buttons.join(''));
+
+            $('.page-btn').click(function(e) {
+                e.preventDefault();
+                const page = Number($(this).data('page'));
+                if (page >= 1 && page <= totalPages) {
+                    currentPage = page;
+                    renderTable();
                 }
             });
+        }
 
-            if (!found) {
-                $('.noresult').show();
-            } else {
-                $('.noresult').hide();
-            }
+        $('.search').on('keyup', function() {
+            const keyword = $(this).val().toLowerCase();
+            filteredRows = allRows.filter(row => $(row).text().toLowerCase().includes(keyword));
+            currentPage = 1;
+            renderTable();
         });
+
+        renderTable();
     });
 </script>
-
 @endsection

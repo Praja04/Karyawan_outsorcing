@@ -278,7 +278,7 @@
                                             @endif
                                         </td>
                                         <td>
-                                            <a href="{{ route('admin_hrd.plotting.show', $plan->id) }}" class="btn btn-info btn-sm">
+                                            <a href="{{ route('admin_produksi.plotting.show', $plan->id) }}" class="btn btn-info btn-sm">
                                                 View
                                             </a>
 
@@ -291,6 +291,9 @@
                                     @endforelse
                                 </tbody>
                             </table>
+                            <nav>
+                                <ul class="pagination justify-content-center mt-3" id="planningPagination"></ul>
+                            </nav>
                             <div class="noresult" style="display: none">
                                 <div class="text-center">
                                     <lord-icon src="https://cdn.lordicon.com/msoeawqm.json" trigger="loop" colors="primary:#121331,secondary:#08a88a" style="width:75px;height:75px">
@@ -300,17 +303,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="d-flex justify-content-end mt-2">
-                            <div class="pagination-wrap hstack gap-2">
-                                <a class="page-item pagination-prev disabled" href="#">
-                                    Previous
-                                </a>
-                                <ul class="pagination listjs-pagination mb-0"></ul>
-                                <a class="page-item pagination-next" href="#">
-                                    Next
-                                </a>
-                            </div>
-                        </div>
+
 
                         <!-- Modal -->
                         <div class="modal fade flip" id="deleteOrder" tabindex="-1" aria-hidden="true">
@@ -347,13 +340,128 @@
 <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 <script>
     $(document).ready(function() {
+        let allRows = Array.from($('#ticket-list-data tr'));
+        let filteredRows = [...allRows];
+        const perPage = 10;
+        let currentPage = 1;
+        const $tableBody = $('#ticket-list-data');
+        const $pagination = $('#planningPagination');
+
+        function renderTable() {
+            const totalPages = Math.ceil(filteredRows.length / perPage);
+            const start = (currentPage - 1) * perPage;
+            const end = start + perPage;
+            $tableBody.empty().append(filteredRows.slice(start, end));
+
+            // Toggle Noresult
+            $('.noresult').toggle(filteredRows.length === 0);
+
+            // Render ulang pagination
+            $pagination.empty();
+
+            if (totalPages <= 1) return;
+
+            // Tombol ←
+            $pagination.append(`
+                <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                    <a class="page-link page-btn" href="#" data-page="${currentPage - 1}">←</a>
+                </li>
+            `);
+
+            // Nomor halaman
+            for (let i = 1; i <= totalPages; i++) {
+                $pagination.append(`
+                    <li class="page-item ${i === currentPage ? 'active' : ''}">
+                        <a class="page-link page-btn" href="#" data-page="${i}">${i}</a>
+                    </li>
+                `);
+            }
+
+            // Tombol →
+            $pagination.append(`
+                <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+                    <a class="page-link page-btn" href="#" data-page="${currentPage + 1}">→</a>
+                </li>
+            `);
+
+            // Event pagination
+            $('.page-btn').click(function(e) {
+                e.preventDefault();
+                const target = Number($(this).data('page'));
+                if (target >= 1 && target <= totalPages) {
+                    currentPage = target;
+                    renderTable();
+                }
+            });
+        }
+
+        // Pencarian
+        $('.search').on('keyup', function() {
+            const keyword = $(this).val().toLowerCase();
+            filteredRows = allRows.filter(row => $(row).text().toLowerCase().includes(keyword));
+            currentPage = 1;
+            renderTable();
+        });
+
+        // Render awal
+        renderTable();
+    });
+</script>
+<script>
+    $(document).ready(function() {
         // Fungsi untuk load data dari API
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            }
+        });
 
         let currentPage = 1;
-        let perPage = 5; // ← Ubah ini untuk jumlah data per halaman
+        let perPage = 10; // ← Ubah ini untuk jumlah data per halaman
         let allPlanningData = []; // Simpan semua data
         function renderPlanningPage() {
-            
+            const planningList = $('#activePlanningList');
+            planningList.empty();
+
+            const start = (currentPage - 1) * perPage;
+            const end = start + perPage;
+            const pageData = allPlanningData.slice(start, end);
+
+            pageData.forEach(item => {
+                const startDate = new Date(item.start_date);
+                const day = ('0' + startDate.getDate()).slice(-2);
+                const month = ('0' + (startDate.getMonth() + 1)).slice(-2);
+                const year = startDate.getFullYear().toString().slice(-2);
+                const dayName = startDate.toLocaleString('en-US', {
+                    weekday: 'short'
+                });
+                const tanggalDisplay = `${day}-${month}-${year}`;
+
+                const html = `
+            <li class="list-group-item ps-0">
+                <div class="row align-items-center g-3">
+                    <div class="col-auto">
+                        <div class="avatar-sm p-1 py-2 h-auto bg-light rounded-3 shadow">
+                            <div class="text-center">
+                                <h5 class="mb-0">${day}</h5>
+                                <div class="text-muted">${dayName}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <h5 class="text-muted mt-0 mb-1 fs-13">
+                            ${tanggalDisplay} (${item.group}) - ${item.jumlah_karyawan} Orang
+                        </h5>
+                        <p class="text-reset fs-14 mb-0">
+                            Shift ${item.shift} - ${item.kode_bagian} - ${item.kode_jabatan}
+                        </p>
+                    </div>
+                </div>
+            </li>
+        `;
+                planningList.append(html);
+            });
+
             // Update text showing
             $('#totalCount').text(allPlanningData.length);
 
@@ -367,25 +475,44 @@
 
             const totalPages = Math.ceil(allPlanningData.length / perPage);
 
-            pagination.append(`
+            if (totalPages <= 1) return; // tidak perlu pagination kalau datanya sedikit
+
+            const buttons = [];
+
+            // ← prev
+            buttons.push(`
         <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
-            <a href="#" class="page-link" data-page="${currentPage - 1}">←</a>
+            <a href="#" class="page-link pagination-btn" data-page="${currentPage - 1}">←</a>
         </li>
     `);
 
+            // nomor halaman
             for (let i = 1; i <= totalPages; i++) {
-                pagination.append(`
+                buttons.push(`
             <li class="page-item ${i === currentPage ? 'active' : ''}">
-                <a href="#" class="page-link" data-page="${i}">${i}</a>
+                <a href="#" class="page-link pagination-btn" data-page="${i}">${i}</a>
             </li>
         `);
             }
 
-            pagination.append(`
+            // → next
+            buttons.push(`
         <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
-            <a href="#" class="page-link" data-page="${currentPage + 1}">→</a>
+            <a href="#" class="page-link pagination-btn" data-page="${currentPage + 1}">→</a>
         </li>
     `);
+
+            pagination.html(buttons.join(''));
+
+            // Event klik pagination
+            $('.pagination-btn').on('click', function(e) {
+                e.preventDefault();
+                const targetPage = Number($(this).data('page'));
+                if (targetPage >= 1 && targetPage <= totalPages) {
+                    currentPage = targetPage;
+                    renderPlanningPage();
+                }
+            });
         }
 
         function loadDashboardSummary() {
@@ -412,14 +539,11 @@
                         const day = ('0' + start.getDate()).slice(-2);
                         const month = ('0' + (start.getMonth() + 1)).slice(-2);
                         const year = start.getFullYear().toString().slice(-2);
-                        const day_end = ('0' + end.getDate()).slice(-2);
-
                         const dayName = start.toLocaleString('en-US', {
                             weekday: 'short'
                         }); // Mon, Tue, etc
 
                         const tanggalDisplay = `${day}-${month}-${year}`;
-                       
 
                         const html = `
                     <li class="list-group-item ps-0">
@@ -434,7 +558,7 @@
                             </div>
                             <div class="col">
                                 <h5 class="text-muted mt-0 mb-1 fs-13">
-                                    ${day} - ${day_end} / ${month} /  ${year} (${item.group}) - ${item.jumlah_karyawan} Orang
+                                    ${tanggalDisplay} (${item.group}) - ${item.jumlah_karyawan} Orang
                                 </h5>
                                 <p class="text-reset fs-14 mb-0">
                                     Shift ${item.shift} - ${item.kode_bagian} - ${item.kode_jabatan}
@@ -451,7 +575,7 @@
                     renderChart(data.grafikRange);
 
                     allPlanningData = data.activePlanning;
-                      renderPlanningPage();
+                    renderPlanningPage();
 
                 },
                 error: function(err) {
@@ -535,27 +659,7 @@
         // Load data awal
         loadDashboardSummary();
 
-        $('.search').on('keyup', function() {
-            let keyword = $(this).val().toLowerCase();
-            let found = false;
 
-            $('#ticket-list-data tr').each(function() {
-                let rowText = $(this).text().toLowerCase();
-
-                if (rowText.indexOf(keyword) > -1) {
-                    $(this).show();
-                    found = true;
-                } else {
-                    $(this).hide();
-                }
-            });
-
-            if (!found) {
-                $('.noresult').show();
-            } else {
-                $('.noresult').hide();
-            }
-        });
     });
 </script>
 @endsection

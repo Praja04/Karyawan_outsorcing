@@ -112,6 +112,8 @@
                                             <!-- Baris dinamis via JS -->
                                         </tbody>
                                     </table>
+
+                                    <div id="paginationWrapper" class="mt-3 text-center"></div>
                                     <div class="noresult text-center py-4" style="display:none">
                                         <lord-icon src="https://cdn.lordicon.com/msoeawqm.json" trigger="loop" colors="primary:#405189,secondary:#0ab39c" style="width:75px;height:75px">
                                         </lord-icon>
@@ -203,7 +205,7 @@
         if (!status) return Swal.fire('Oops', 'Pilih status terlebih dahulu.', 'warning');
 
         $.ajax({
-            url: `/admin/update/status/${id}`,
+            url: "{{url('/admin/update/status')}}/" + id,
             method: 'POST',
             data: {
                 new_status: status,
@@ -245,9 +247,34 @@
             tabFortunaTable: []
         };
 
+        const itemsPerPage = 10;
+        let currentPage = 1;
+
+        function paginate(tableId, rows) {
+            const totalPages = Math.ceil(rows.length / itemsPerPage);
+            const start = (currentPage - 1) * itemsPerPage;
+            const end = start + itemsPerPage;
+            const currentRows = rows.slice(start, end);
+
+            $(`#${tableId} tbody`).html(currentRows.join(''));
+
+            const pagination = [];
+            for (let i = 1; i <= totalPages; i++) {
+                pagination.push(`<button class="page-btn btn btn-sm btn-outline-primary mx-1 ${i === currentPage ? 'active' : ''}" data-page="${i}">${i}</button>`);
+            }
+
+            $('#paginationWrapper').html(pagination.join(''));
+
+            $('.page-btn').on('click', function() {
+                currentPage = Number($(this).data('page'));
+                paginate(tableId, rows);
+            });
+        }
+
         if (!data.length) {
             $('.noresult').show();
             $('#tabAllTable tbody, #tabKMJTable tbody, #tabFortunaTable tbody').empty();
+            $('#paginationWrapper').empty();
             return;
         }
 
@@ -255,30 +282,26 @@
 
         data.forEach(item => {
             const row = `
-                <tr>
-                    <td>${item.nama_karyawan ?? '-'}</td>
-                    <td>${item.nama_vendor ?? '-'}</td>
-                    <td>${item.nik_bas ?? '-'}</td>
-                    <td>${item.nik_os ?? '-'}</td>
-                    <td>${item.jenis_kelamin ?? '-'}</td>
-                    <td>${item.grup ?? '-'}</td>
-                    <td>${item.kode_bagian ?? '-'}</td>
-                    <td><span class="badge bg-${item.status === 'aktif' ? 'success' : item.status === 'terminated' ? 'danger' : 'secondary'}">${item.status ?? '-'}</span></td>
-                    <td>
-                       <button class="btn btn-sm btn-warning btn-ubah-status" data-id="${item.id}" data-nama="${item.nama_karyawan}">Ubah Status</button>
-                    </td>
-
-                </tr>
-            `;
-
+            <tr>
+                <td>${item.nama_karyawan ?? '-'}</td>
+                <td>${item.nama_vendor ?? '-'}</td>
+                <td>${item.nik_bas ?? '-'}</td>
+                <td>${item.nik_os ?? '-'}</td>
+                <td>${item.jenis_kelamin ?? '-'}</td>
+                <td>${item.grup ?? '-'}</td>
+                <td>${item.kode_bagian ?? '-'}</td>
+                <td><span class="badge bg-${item.status === 'aktif' ? 'success' : item.status === 'terminated' ? 'danger' : 'secondary'}">${item.status ?? '-'}</span></td>
+                <td>
+                    <button class="btn btn-sm btn-warning btn-ubah-status" data-id="${item.id}" data-nama="${item.nama_karyawan}">Ubah Status</button>
+                </td>
+            </tr>
+        `;
             tables.tabAllTable.push(row);
             if ((item.nama_vendor || '').toLowerCase().includes('kmj')) tables.tabKMJTable.push(row);
             if ((item.nama_vendor || '').toLowerCase().includes('fortuna')) tables.tabFortunaTable.push(row);
         });
 
-        $('#tabAllTable tbody').html(tables.tabAllTable.join(''));
-        $('#tabKMJTable tbody').html(tables.tabKMJTable.join(''));
-        $('#tabFortunaTable tbody').html(tables.tabFortunaTable.join(''));
+        paginate('tabAllTable', tables.tabAllTable); // You can adapt this for other tabs as well
     }
 </script>
 @endsection

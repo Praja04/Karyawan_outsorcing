@@ -44,7 +44,7 @@
                     <!--end row-->
 
                     <div class="row">
-                     
+
                         <div class="col-xl-4 col-md-6">
                             <!-- card -->
                             <div class="card card-animate">
@@ -267,6 +267,9 @@
                                     @endforelse
                                 </tbody>
                             </table>
+                            <nav>
+                                <ul class="pagination justify-content-center mt-3" id="planningPagination"></ul>
+                            </nav>
                             <div class="noresult" style="display: none">
                                 <div class="text-center">
                                     <lord-icon src="https://cdn.lordicon.com/msoeawqm.json" trigger="loop" colors="primary:#121331,secondary:#08a88a" style="width:75px;height:75px">
@@ -321,6 +324,75 @@
     <!-- container-fluid -->
 </div>
 <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+<script>
+    $(document).ready(function() {
+        let allRows = Array.from($('#ticket-list-data tr'));
+        let filteredRows = [...allRows];
+        const perPage = 10;
+        let currentPage = 1;
+        const $tableBody = $('#ticket-list-data');
+        const $pagination = $('#planningPagination');
+
+        function renderTable() {
+            const totalPages = Math.ceil(filteredRows.length / perPage);
+            const start = (currentPage - 1) * perPage;
+            const end = start + perPage;
+            $tableBody.empty().append(filteredRows.slice(start, end));
+
+            // Toggle Noresult
+            $('.noresult').toggle(filteredRows.length === 0);
+
+            // Render ulang pagination
+            $pagination.empty();
+
+            if (totalPages <= 1) return;
+
+            // Tombol ←
+            $pagination.append(`
+                <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                    <a class="page-link page-btn" href="#" data-page="${currentPage - 1}">←</a>
+                </li>
+            `);
+
+            // Nomor halaman
+            for (let i = 1; i <= totalPages; i++) {
+                $pagination.append(`
+                    <li class="page-item ${i === currentPage ? 'active' : ''}">
+                        <a class="page-link page-btn" href="#" data-page="${i}">${i}</a>
+                    </li>
+                `);
+            }
+
+            // Tombol →
+            $pagination.append(`
+                <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+                    <a class="page-link page-btn" href="#" data-page="${currentPage + 1}">→</a>
+                </li>
+            `);
+
+            // Event pagination
+            $('.page-btn').click(function(e) {
+                e.preventDefault();
+                const target = Number($(this).data('page'));
+                if (target >= 1 && target <= totalPages) {
+                    currentPage = target;
+                    renderTable();
+                }
+            });
+        }
+
+        // Pencarian
+        $('.search').on('keyup', function() {
+            const keyword = $(this).val().toLowerCase();
+            filteredRows = allRows.filter(row => $(row).text().toLowerCase().includes(keyword));
+            currentPage = 1;
+            renderTable();
+        });
+
+        // Render awal
+        renderTable();
+    });
+</script>
 <script>
     $(document).ready(function() {
         // Fungsi untuk load data dari API
@@ -412,7 +484,7 @@
                 dataType: "json",
                 success: function(data) {
                     // Tampilkan data summary di elemen HTML
-                   
+
                     $('#activePlanningCount').text(data.activePlanningCount);
                     $('#totalKebutuhanHariIni').text(data.totalKebutuhanHariIni);
                     $('#totalSudahDipplotHariIni').text(data.totalSudahDipplotHariIni);
@@ -549,27 +621,7 @@
         // Load data awal
         loadDashboardSummary();
 
-        $('.search').on('keyup', function() {
-            let keyword = $(this).val().toLowerCase();
-            let found = false;
 
-            $('#ticket-list-data tr').each(function() {
-                let rowText = $(this).text().toLowerCase();
-
-                if (rowText.indexOf(keyword) > -1) {
-                    $(this).show();
-                    found = true;
-                } else {
-                    $(this).hide();
-                }
-            });
-
-            if (!found) {
-                $('.noresult').show();
-            } else {
-                $('.noresult').hide();
-            }
-        });
     });
 </script>
 @endsection
