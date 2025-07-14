@@ -162,6 +162,11 @@
     </div>
 </div>
 <script>
+    let tables = {
+        tabAllTable: [],
+        tabKMJTable: [],
+        tabFortunaTable: []
+    };
     $(document).ready(function() {
         loadKaryawanData();
 
@@ -256,12 +261,11 @@
     }
 
     function renderKaryawan(data) {
-        const tables = {
+        tables = {
             tabAllTable: [],
             tabKMJTable: [],
             tabFortunaTable: []
         };
-
         const itemsPerPage = 20;
         let currentPage = 1;
 
