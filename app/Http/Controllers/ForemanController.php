@@ -58,71 +58,69 @@ class ForemanController extends Controller
     }
 
 
+
     // public function storePlotting(Request $request)
     // {
     //     $request->validate([
-    //         'planning_id' => 'required|exists:plannings,id',
-    //         'employee_ids' => 'required|array',
+    //         'planning_id'   => 'required|exists:plannings,id',
+    //         'employee_ids'  => 'required|array',
     //     ]);
 
     //     $planning = Planning::findOrFail($request->planning_id);
+    //     $existingCount = $planning->plottingKehadiran()->count();
+    //     $newCount = count($request->employee_ids);
 
-    //     $existingPlottingCount = $planning->plottingKehadiran()->count();
-    //     $newPlottingCount = count($request->employee_ids);
-
-    //     if (($existingPlottingCount + $newPlottingCount) > $planning->jumlah_karyawan) {
+    //     if (($existingCount + $newCount) > $planning->jumlah_karyawan) {
     //         return response()->json([
-    //             'status' => 'error',
-    //             'message' => 'Jumlah karyawan yang dipilih melebihi jumlah yang direncanakan.'
+    //             'status'  => 'error',
+    //             'message' => 'Jumlah karyawan yang dipilih melebihi kapasitas planning.'
     //         ], 422);
     //     }
 
-    //     $bulkMessages = [];
+    //     $token = config('services.telegram.bot_token');
 
     //     foreach ($request->employee_ids as $empId) {
+    //         // Generate OTP unik
     //         do {
-    //             $randomCode = strtoupper(substr(md5(uniqid()), 0, 6)); // contoh: 6 karakter acak
-    //             $otp = "P{$planning->id}-{$randomCode}";
+    //             $random = strtoupper(substr(md5(uniqid()), 0, 6));
+    //             $otp = "P{$planning->id}-{$random}";
     //         } while (PlottingKehadiran::where('otp', $otp)->exists());
 
+    //         // Simpan plotting
     //         $planning->plottingKehadiran()->create([
-    //             'employee_id' => $empId,
-    //             'tanggal' => Carbon::today()->toDateString(),
-    //             'status_konfirmasi' => null,
-    //             'otp' => $otp,
+    //             'employee_id'        => $empId,
+    //             'tanggal'            => Carbon::today()->toDateString(),
+    //             'status_konfirmasi'  => null,
+    //             'otp'                => $otp,
     //         ]);
 
+    //         // Kirim notifikasi via Telegram
     //         $employee = Employee::find($empId);
-    //         if (!$employee || !$employee->nomor_hp) {
+    //         if (!$employee || !$employee->chat_id) {
     //             continue;
     //         }
 
-    //         $nomorTujuan = preg_replace('/^0/', '62', preg_replace('/\D/', '', $employee->nomor_hp));
     //         $message = "Halo *{$employee->nama_karyawan}*,\n"
-    //         . "Anda dijadwalkan masuk pada tanggal *{$planning->start_date} s.d {$planning->end_date}* shift *{$planning->shift}*.\n"
-    //         . "Silakan konfirmasi dengan membalas pesan:\n*HADIR {$otp}* atau *TIDAK HADIR {$otp}*";
+    //             . "Anda dijadwalkan kerja tanggal *{$planning->start_date->format('d M')} s.d {$planning->end_date->format('d M')}* (Shift *{$planning->shift}*).\n"
+    //             . "Balas dengan *HADIR {$otp}* atau *TIDAK HADIR {$otp}* untuk konfirmasi.";
 
-    //         $bulkMessages[] = [
-    //             'number' => $nomorTujuan,
-    //             'message' => $message
-    //         ];
-    //     }
-
-    //     // Kirim semua pesan sekaligus ke Node.js via /send-bulk
-    //     try {
-    //         Http::timeout(10)->post('http://10.11.11.10:3000/send-bulk', [
-    //             'messages' => $bulkMessages,
-    //             'delayMs' => 3000 // Opsional: delay antar pesan untuk keamanan
-    //         ]);
-    //     } catch (\Exception $e) {
-    //         Log::warning("Gagal kirim WA massal: " . $e->getMessage());
+    //         try {
+    //             Http::post("https://api.telegram.org/bot{$token}/sendMessage", [
+    //                 'chat_id'    => $employee->chat_id,
+    //                 'text'       => $message,
+    //                 'parse_mode' => 'Markdown'
+    //             ]);
+    //         } catch (\Exception $e) {
+    //             Log::warning("Gagal kirim ke Telegram ({$employee->chat_id}): " . $e->getMessage());
+    //         }
     //     }
 
     //     return response()->json([
-    //         'status' => 'success',
-    //         'message' => 'Plotting berhasil disimpan dan notifikasi dikirim.'
+    //         'status'  => 'success',
+    //         'message' => 'Plotting disimpan dan notifikasi Telegram dikirim.'
     //     ]);
     // }
+
     public function storePlotting(Request $request)
     {
         $request->validate([
@@ -158,21 +156,42 @@ class ForemanController extends Controller
                 'otp'                => $otp,
             ]);
 
-            // Kirim notifikasi via Telegram
+            // Kirim notifikasi via Telegram dengan tombol balasan langsung
             $employee = Employee::find($empId);
             if (!$employee || !$employee->chat_id) {
                 continue;
             }
 
-            $message = "Halo *{$employee->nama_karyawan}*,\n"
-                . "Anda dijadwalkan kerja tanggal *{$planning->start_date->format('d M')} s.d {$planning->end_date->format('d M')}* (Shift *{$planning->shift}*).\n"
-                . "Balas dengan *HADIR {$otp}* atau *TIDAK HADIR {$otp}* untuk konfirmasi.";
+            $message = "Hai *{$employee->nama_karyawan}*,\n\n"
+            . "Kamu dijadwalkan kerja tanggal *{$planning->start_date->format('d M')} s.d {$planning->end_date->format('d M')}* (Shift *{$planning->shift}*).\n\n"
+            . "Silakan klik salah satu tombol di bawah ini untuk konfirmasi:";
+
+            $keyboard = [
+                'keyboard' => [
+                    ["HADIR {$otp}"],
+                    ["TIDAK HADIR {$otp} Sakit"],
+                    ["TIDAK HADIR {$otp} Cuti"],
+                    ["TIDAK HADIR {$otp} Request Off"]
+                ],
+                'resize_keyboard' => true,
+                'one_time_keyboard' => true
+            ];
 
             try {
                 Http::post("https://api.telegram.org/bot{$token}/sendMessage", [
                     'chat_id'    => $employee->chat_id,
                     'text'       => $message,
-                    'parse_mode' => 'Markdown'
+                    'parse_mode' => 'Markdown',
+                    'reply_markup' => json_encode([
+                        'keyboard' => [
+                            ["HADIR {$otp}"],
+                            ["TIDAK HADIR {$otp} Sakit"],
+                            ["TIDAK HADIR {$otp} Cuti"],
+                            ["TIDAK HADIR {$otp} Request Off"]
+                        ],
+                        'resize_keyboard' => true,
+                        'one_time_keyboard' => true
+                    ])
                 ]);
             } catch (\Exception $e) {
                 Log::warning("Gagal kirim ke Telegram ({$employee->chat_id}): " . $e->getMessage());
@@ -181,7 +200,7 @@ class ForemanController extends Controller
 
         return response()->json([
             'status'  => 'success',
-            'message' => 'Plotting disimpan dan notifikasi Telegram dikirim.'
+            'message' => 'Plotting disimpan dan notifikasi Telegram dikirim dengan tombol balasan langsung.'
         ]);
     }
 

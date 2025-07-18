@@ -129,15 +129,67 @@ class KehadiranApiController extends Controller
                 continue;
             }
 
-            if (preg_match('/^(hadir|tidak hadir)\s+(p[0-9]+-[a-z0-9]{6})$/i', $messageText, $match)) {
+            // if (preg_match('/^(hadir|tidak hadir)\s+(p[0-9]+-[a-z0-9]{6})$/i', $messageText, $match)) {
+            //     $status = strtolower($match[1]);
+            //     $otp = strtoupper($match[2]);
+
+            //     $employee = Employee::where('chat_id', $chatId)->first();
+            //     if (!$employee) continue;
+
+            //     $plotting = PlottingKehadiran::where('employee_id', $employee->id)
+            //         ->where('otp', $otp)
+            //         ->first();
+
+            //     if (!$plotting) {
+            //         Http::post("https://api.telegram.org/bot{$token}/sendMessage", [
+            //             'chat_id' => $chatId,
+            //             'text'    => "Maaf, OTP tidak ditemukan atau tidak valid.",
+            //         ]);
+
+            //         // Catat update_id balasan dari bot
+            //         Cache::put("last_bot_update_id_{$chatId}", $updateId);
+            //         continue;
+            //     }
+
+            //     $cacheKey = "otp_handled_{$chatId}_{$otp}";
+            //     if (Cache::get($cacheKey)) {
+            //         continue;
+            //     }
+
+            //     if ($plotting->status_konfirmasi !== null) {
+            //         Http::post("https://api.telegram.org/bot{$token}/sendMessage", [
+            //             'chat_id' => $chatId,
+            //             'text'    => "OTP sudah digunakan sebelumnya untuk konfirmasi sebagai *{$plotting->status_konfirmasi}*.",
+            //             'parse_mode' => 'Markdown',
+            //         ]);
+            //         Cache::put($cacheKey, true, now()->addMinutes(10));
+            //         Cache::put("last_bot_update_id_{$chatId}", $updateId);
+            //         continue;
+            //     }
+
+            //     $plotting->status_konfirmasi = $status;
+            //     $plotting->save();
+
+            //     Http::post("https://api.telegram.org/bot{$token}/sendMessage", [
+            //         'chat_id' => $chatId,
+            //         'text'    => "Terima kasih, status kamu tercatat sebagai *{$status}*.",
+            //         'parse_mode' => 'Markdown'
+            //     ]);
+
+            //     Cache::put($cacheKey, true, now()->addMinutes(10));
+            //     Cache::put("last_bot_update_id_{$chatId}", $updateId);
+            // }
+
+            if (preg_match('/^(hadir|tidak hadir)\s+(p[0-9]+-[a-z0-9]{6})(?:\s+(sakit|cuti|request off))?$/i', $messageText, $match)) {
                 $status = strtolower($match[1]);
                 $otp = strtoupper($match[2]);
+                $reason = isset($match[3]) ? ucfirst(strtolower($match[3])) : null;
 
                 $employee = Employee::where('chat_id', $chatId)->first();
                 if (!$employee) continue;
 
                 $plotting = PlottingKehadiran::where('employee_id', $employee->id)
-                    ->where('otp', $otp)
+                ->where('otp', $otp)
                     ->first();
 
                 if (!$plotting) {
@@ -145,8 +197,6 @@ class KehadiranApiController extends Controller
                         'chat_id' => $chatId,
                         'text'    => "Maaf, OTP tidak ditemukan atau tidak valid.",
                     ]);
-
-                    // Catat update_id balasan dari bot
                     Cache::put("last_bot_update_id_{$chatId}", $updateId);
                     continue;
                 }
@@ -168,15 +218,23 @@ class KehadiranApiController extends Controller
                 }
 
                 $plotting->status_konfirmasi = $status;
+                $plotting->reason = ($status === 'tidak hadir') ? $reason : null;
                 $plotting->save();
+
+                $balasan = "Terima kasih, status kamu tercatat sebagai *{$status}*";
+                if ($reason) {
+                    $balasan .= " dengan alasan *{$reason}*.";
+                }
 
                 Http::post("https://api.telegram.org/bot{$token}/sendMessage", [
                     'chat_id' => $chatId,
-                    'text'    => "Terima kasih, status kamu tercatat sebagai *{$status}*.",
+                    'text'    => $balasan,
                     'parse_mode' => 'Markdown'
                 ]);
 
-                Cache::put($cacheKey, true, now()->addMinutes(10));
+                Cache::put($cacheKey, true,
+                    now()->addMinutes(10)
+                );
                 Cache::put("last_bot_update_id_{$chatId}", $updateId);
             }
 

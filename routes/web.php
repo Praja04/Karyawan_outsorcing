@@ -60,6 +60,8 @@ Route::prefix('supervisor')->group(function () {
     Route::put('planning/{id}', [SupervisorController::class, 'update'])->name('admin_produksi.planning.update');
     Route::delete('planning/{id}', [SupervisorController::class, 'destroy'])->name('admin_produksi.planning.destroy');
     Route::get('/planning/{id}/plotting', [SupervisorController::class, 'showPlotting'])->name('admin_produksi.plotting.show');
+    Route::get('/planning/template', [SupervisorController::class, 'downloadTemplate'])->name('planning.template');
+    Route::post('/planning/import', [SupervisorController::class, 'importExcel'])->name('admin_produksi.planning.import');
 });
 
 

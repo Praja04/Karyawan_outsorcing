@@ -53,6 +53,14 @@
                             <div class="flex-shrink-0">
                                 <div class="d-flex flex-wrap gap-2">
                                     <a href="{{ route('admin_produksi.planning.create') }}" class="btn btn-primary mb-3">+ Buat Planning Baru</a>
+
+                                    <a href="{{ route('planning.template') }}" class="btn btn-success mb-3">
+                                        📥 Download Template Excel
+                                    </a>
+
+                                    <button type="button" class="btn btn-info mb-3" data-bs-toggle="modal" data-bs-target="#uploadExcelModal">
+                                        📤 Upload Excel
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -136,7 +144,7 @@
                                 </div>
                             </div>
                         </div>
-                       
+
 
                         <!-- Modal -->
                         <div class="modal fade flip" id="deleteOrder" tabindex="-1" aria-hidden="true">
@@ -241,7 +249,26 @@
             </form>
         </div>
     </div>
-
+    <div class="modal fade" id="uploadExcelModal" tabindex="-1" aria-labelledby="uploadExcelModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <form id="uploadExcelForm" enctype="multipart/form-data">
+                @csrf
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Upload Excel Perencanaan</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="file" name="planning_excel" accept=".xlsx,.xls" class="form-control" required>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-success">Upload Sekarang</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -251,20 +278,63 @@
         }
     });
 
-    // Show modal edit
-    $('.edit-btn').on('click', function() {
-        $('#edit-id').val($(this).data('id'));
-        $('#edit-start_date').val($(this).data('start_date'));
-        $('#edit-end_date').val($(this).data('end_date'));
-        $('#edit-group').val($(this).data('group'));
-        $('#edit-jumlah').val($(this).data('jumlah'));
+    $('#uploadExcelForm').on('submit', function(e) {
+        e.preventDefault();
+
+        let formData = new FormData(this);
+
+        Swal.fire({
+            title: 'Mengunggah data...',
+            allowOutsideClick: false,
+            didOpen: () => Swal.showLoading()
+        });
+
+        $.ajax({
+            url: "{{ route('admin_produksi.planning.import') }}",
+            method: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(res) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Berhasil!',
+                    text: 'Data planning berhasil diunggah.',
+                    timer: 1500,
+                    showConfirmButton: false
+                }).then(() => location.reload());
+            },
+            error: function(xhr) {
+                let errorMsg = 'Terjadi kesalahan saat upload.';
+                if (xhr.responseJSON && xhr.responseJSON.errors) {
+                    errorMsg = Object.values(xhr.responseJSON.errors).flat().join('\n');
+                }
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal!',
+                    text: errorMsg
+                });
+            }
+        });
+    });
+
+
+    // Delegated handler untuk tombol Edit
+    $(document).on('click', '.edit-btn', function() {
+        const button = $(this);
+        $('#edit-id').val(button.data('id'));
+        $('#edit-start_date').val(button.data('start_date'));
+        $('#edit-end_date').val(button.data('end_date'));
+        $('#edit-group').val(button.data('group'));
+        $('#edit-jumlah').val(button.data('jumlah'));
+
         $('#editPlanningModal').modal('show');
     });
 
-    // Submit update with SweetAlert
+    // Submit edit form dengan feedback SweetAlert
     $('#editPlanningForm').on('submit', function(e) {
         e.preventDefault();
-        let id = $('#edit-id').val();
+        const id = $('#edit-id').val();
 
         Swal.fire({
             title: 'Memperbarui...',
@@ -273,7 +343,7 @@
         });
 
         $.ajax({
-            url: "{{url('/supervisor/planning')}}" + "/" + id,
+            url: "{{url('/supervisor/planning')}}" + '/' + id,
             method: 'POST',
             data: $(this).serialize(),
             success: function(res) {
@@ -283,27 +353,25 @@
                     text: res.message,
                     timer: 1500,
                     showConfirmButton: false
-                }).then(() => {
-                    location.reload();
-                });
+                }).then(() => location.reload());
             },
             error: function(xhr) {
                 Swal.fire({
                     icon: 'error',
                     title: 'Gagal!',
-                    text: xhr.responseJSON.message || 'Update gagal'
+                    text: xhr.responseJSON?.message || 'Gagal memperbarui data.'
                 });
             }
         });
     });
 
-    // Delete with SweetAlert
-    $('.delete-btn').on('click', function() {
-        let id = $(this).data('id');
+    // Delegated handler untuk tombol Delete
+    $(document).on('click', '.delete-btn', function() {
+        const id = $(this).data('id');
 
         Swal.fire({
             title: 'Hapus Planning?',
-            text: 'Data tidak bisa dikembalikan setelah dihapus.',
+            text: 'Data tidak dapat dikembalikan setelah dihapus.',
             icon: 'warning',
             showCancelButton: true,
             confirmButtonText: 'Ya, hapus',
@@ -311,11 +379,8 @@
         }).then((result) => {
             if (result.isConfirmed) {
                 $.ajax({
-                    url: "{{url('/supervisor/planning')}}" + "/" + id,
+                    url: "{{url('/supervisor/planning')}}" + '/' + id,
                     method: 'DELETE',
-                    data: {
-                        _token: '{{ csrf_token() }}'
-                    },
                     success: function() {
                         Swal.fire({
                             icon: 'success',
@@ -323,9 +388,7 @@
                             text: 'Planning berhasil dihapus.',
                             timer: 1500,
                             showConfirmButton: false
-                        }).then(() => {
-                            location.reload();
-                        });
+                        }).then(() => location.reload());
                     },
                     error: function() {
                         Swal.fire({

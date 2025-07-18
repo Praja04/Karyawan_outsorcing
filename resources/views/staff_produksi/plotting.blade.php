@@ -190,6 +190,7 @@
                                         <th>NIK OS</th>
                                         <th>Tanggal Plotting</th>
                                         <th>Status Konfirmasi</th>
+                                        <th>Reason</th>
                                         <th>Aksi</th>
                                     </tr>
                                 </thead>
@@ -200,7 +201,16 @@
                                         <td>{{ $plot->employee->nama_karyawan ?? '-' }}</td>
                                         <td>{{ $plot->employee->nik_os ?? '-' }}</td>
                                         <td>{{ $plot->tanggal ?? '-' }}</td>
-                                        <td>{{ $plot->status_konfirmasi ?? 'Belum Konfirmasi' }}</td>
+                                        <td class="status-konfirmasi">
+                                            @if ($plot->status_konfirmasi === 'hadir')
+                                            <span class="badge bg-success">Hadir</span>
+                                            @elseif ($plot->status_konfirmasi === 'tidak hadir')
+                                            <span class="badge bg-danger">Tidak Hadir</span>
+                                            @else
+                                            <span class="badge bg-secondary">Belum Konfirmasi</span>
+                                            @endif
+                                        </td>
+                                        <td class="reason">{{ $plot->reason ?? '-' }}</td>
                                         <td>
                                             <button class="btn btn-warning btn-sm edit-plotting" data-id="{{ $plot->id }}" data-nama="{{ $plot->employee->nama_karyawan ?? '-' }}" data-nik="{{ $plot->employee->nik_os ?? '-' }}" data-tanggal="{{ $plot->tanggal ?? '' }}" data-employee-id="{{ $plot->employee_id }}">
                                                 Edit

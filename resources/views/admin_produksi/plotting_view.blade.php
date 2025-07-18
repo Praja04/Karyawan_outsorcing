@@ -44,6 +44,7 @@
                                         <th>NIK OS</th>
                                         <th>Tanggal Diinfokan</th>
                                         <th>Status Konfirmasi</th>
+                                        <th>Reason</th>
                                     </tr>
                                 </thead>
                                 <tbody class="list form-check-all" id="ticket-list-data">
@@ -62,6 +63,7 @@
                                             <span class="badge bg-secondary">Belum Konfirmasi</span>
                                             @endif
                                         </td>
+                                        <td class="reason">{{ $plot->reason ?? '-' }}</td>
                                     </tr>
                                     @empty
                                     <tr>
