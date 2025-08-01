@@ -42,11 +42,10 @@ class ForemanController extends Controller
 
         // Ambil planning yang end_date >= hari ini
         $plannings = Planning::with('plottingKehadiran.employee')
-            ->where('group', $adminGroup)
-            ->where('end_date', '>=', $today)
+        ->where('group', $adminGroup)
+        ->whereRaw('end_date >= DATE_SUB(?, INTERVAL 1 DAY)', [$today])
             ->orderBy('start_date', 'desc')
             ->get();
-
         // Ambil employees hanya dari grup yang sesuai
         // $employees = Employee::where('grup', $adminGroup)->get();
         $employees = Employee::get();
@@ -129,7 +128,9 @@ class ForemanController extends Controller
         ]);
 
         $planning = Planning::findOrFail($request->planning_id);
-        $existingCount = $planning->plottingKehadiran()->count();
+        $existingCount = $planning->plottingKehadiran()
+        ->where('status_konfirmasi', 'NOT LIKE', 'TIDAK HADIR%')
+        ->count();
         $newCount = count($request->employee_ids);
 
         if (($existingCount + $newCount) > $planning->jumlah_karyawan) {
@@ -206,7 +207,6 @@ class ForemanController extends Controller
 
     public function viewPlotting(Planning $planning)
     {
-      
         $allEmployees = Employee::get()->where('status', 'aktif');
 
         // Ambil ID employee yang jadwal plotting-nya bertabrakan
@@ -223,8 +223,26 @@ class ForemanController extends Controller
         // Ambil ID karyawan yang sudah diplotting di planning ini (jika perlu ditandai di blade)
         $plottingEmployeeIds = $planning->plottingKehadiran()->pluck('employee_id')->toArray();
 
-        return view('staff_produksi.plotting', compact('planning', 'employees', 'plottingEmployeeIds'));
+        // Hitung jumlah yang hadir dan tidak hadir
+        $jumlahHadir = $planning->plottingKehadiran()
+            ->where('status_konfirmasi', 'LIKE', 'HADIR%')
+            ->count();
 
+        $jumlahTidakHadir = $planning->plottingKehadiran()
+            ->where('status_konfirmasi', 'LIKE', 'TIDAK HADIR%')
+            ->count();
+        $jumlahBelumKonfirmasi = $planning->plottingKehadiran()
+            ->where('status_konfirmasi', NULL)
+            ->count();
+
+        return view('staff_produksi.plotting', compact(
+            'planning',
+            'employees',
+            'plottingEmployeeIds',
+            'jumlahHadir',
+            'jumlahTidakHadir',
+            'jumlahBelumKonfirmasi'
+        ));
     }
 
     public function deletePlotting($id)

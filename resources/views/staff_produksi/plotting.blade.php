@@ -160,6 +160,54 @@
         <div class="row">
             <div class="col-lg-12">
                 <div class="card" id="ticketsList">
+                    <div class="row mt-4">
+                        <div class="col-lg-4 col-sm-6">
+                            <div class="p-2 border border-dashed rounded">
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-sm me-2">
+                                        <div class="avatar-title rounded bg-transparent text-success fs-24">
+                                            <i class="ri-checkbox-circle-line"></i>
+                                        </div>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p class="text-muted mb-1">Jumlah Karyawan Konfirmasi Hadir:</p>
+                                        <h5 class="mb-0">{{ $jumlahHadir }}</h5>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- end col -->
+                        <div class="col-lg-4 col-sm-6">
+                            <div class="p-2 border border-dashed rounded">
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-sm me-2">
+                                        <div class="avatar-title rounded bg-transparent text-success fs-24">
+                                            <i class="ri-close-circle-line"></i>
+                                        </div>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p class="text-muted mb-1">Jumlah Karyawan Tidak Hadir:</p>
+                                        <h5 class="mb-0">{{ $jumlahTidakHadir }}</h5>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-4 col-sm-6">
+                            <div class="p-2 border border-dashed rounded">
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-sm me-2">
+                                        <div class="avatar-title rounded bg-transparent text-success fs-24">
+                                            <i class="ri-time-line"></i>
+                                        </div>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p class="text-muted mb-1">Jumlah Karyawan Belum Konfirmasi:</p>
+                                        <h5 class="mb-0">{{ $jumlahBelumKonfirmasi }}</h5>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     <div class="card-header border-0">
                         <div class="d-flex align-items-center">
                             <h5 class="card-title mb-0 flex-grow-1">Daftar Karyawan Yang Sudah Di Plotting</h5>
