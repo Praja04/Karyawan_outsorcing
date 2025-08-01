@@ -406,12 +406,12 @@
                             <li class="nav-item">
                                 <a class="nav-link active py-2" data-bs-toggle="tab" href="#tabAll" role="tab">🧾 Semua Karyawan</a>
                             </li>
-                            <li class="nav-item">
+                            <!-- <li class="nav-item">
                                 <a class="nav-link py-2" data-bs-toggle="tab" href="#tabKMJ" role="tab">🏢 Mitra KMJ</a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link py-2" data-bs-toggle="tab" href="#tabFortuna" role="tab">🚚 Mitra Fortuna</a>
-                            </li>
+                            </li> -->
                         </ul>
 
                         <div class="tab-content">
