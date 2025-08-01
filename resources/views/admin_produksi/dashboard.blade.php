@@ -147,21 +147,49 @@
 
                     </div> <!-- end row-->
 
+
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <label for="startDateFilter" class="form-label">Tanggal Mulai</label>
+                            <input type="date" id="startDateFilter" class="form-control" />
+                        </div>
+                        <div class="col-md-3">
+                            <label for="endDateFilter" class="form-label">Tanggal Selesai</label>
+                            <input type="date" id="endDateFilter" class="form-control" />
+                        </div>
+                        <div class="col-md-3">
+                            <label for="groupFilter" class="form-label">Pilih Group</label>
+                            <select id="groupFilter" class="form-select">
+                                <option value="ALL">Semua Group</option>
+                                @foreach (['A', 'B', 'C', 'N'] as $group)
+                                <option value="GROUP {{ $group }}">Group {{ $group }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-3 d-flex align-items-end">
+                            <button id="applyFilterBtn" class="btn btn-primary w-100">Terapkan Filter</button>
+                        </div>
+                    </div>
+
                     <div class="row">
-                        <div class="col-xl-7">
+                        @foreach (['A', 'B', 'C', 'N'] as $group)
+                        <div class="col-xl-6 mb-4">
                             <div class="card">
-                                <div class="card-header border-0 align-items-center d-flex">
-                                    <h4 class="card-title mb-0 flex-grow-1">Kebutuhan Planning dan Plotting</h4>
-
-                                </div><!-- end card header -->
-
+                                <div class="card-header border-0 d-flex align-items-center">
+                                    <h4 class="card-title mb-0 flex-grow-1">Planning & Plotting - Group {{ $group }}</h4>
+                                </div>
                                 <div class="card-body p-0 pb-2">
-                                    <div class="w-100">
-                                        <div id="grafikRange"></div>
-                                    </div>
-                                </div><!-- end card body -->
-                            </div><!-- end card -->
-                        </div><!-- end col -->
+                                    <div id="grafikGroup{{ $group }}" class="w-100 px-3 py-2"></div>
+                                </div>
+                            </div>
+                        </div>
+                        @endforeach
+                    </div>
+
+
+
+                    <div class="row">
+
 
                         <div class="col-xl-5">
                             <div class="card">
@@ -294,14 +322,13 @@
                             <nav>
                                 <ul class="pagination justify-content-center mt-3" id="planningPagination"></ul>
                             </nav>
-                            <div class="noresult" style="display: none">
+                            <!-- <div class="noresult" style="display: none">
                                 <div class="text-center">
                                     <lord-icon src="https://cdn.lordicon.com/msoeawqm.json" trigger="loop" colors="primary:#121331,secondary:#08a88a" style="width:75px;height:75px">
                                     </lord-icon>
                                     <h5 class="mt-2">Sorry! No Result Found</h5>
-                                    <!-- <p class="text-muted mb-0">We've searched more than 150+ Tickets We did not find any Tickets for you search.</p> -->
-                                </div>
-                            </div>
+                                  </div>
+                            </div> -->
                         </div>
 
 
@@ -332,6 +359,129 @@
                 <!--end card-->
             </div>
             <!--end col-->
+        </div>
+
+
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="card" id="employeeCard">
+                    <div class="card-header border-0">
+                        <div class="row align-items-center">
+                            <div class="col-sm">
+                                <h5 class="card-title mb-0">Data Karyawan Outsourcing</h5>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-body border-top">
+                        <form>
+                            <div class="row g-3 align-items-center">
+                                <div class="col-xxl-5 col-sm-6">
+                                    <div class="search-box">
+                                        <input type="text" class="form-control" id="searchKaryawan" placeholder="Cari nama, NIK, atau vendor...">
+                                        <i class="ri-search-line search-icon"></i>
+                                    </div>
+                                </div>
+                                <div class="col-xxl-3 col-sm-4 d-none" aria-hidden="true">
+                                    <select class="form-select" id="filterStatus">
+                                        <option value="">Filter Status</option>
+                                        <option value="all" selected>Semua</option>
+                                        <option value="aktif">Aktif</option>
+                                        <option value="non aktif">Non Aktif</option>
+                                        <option value="terminated">Terminated</option>
+                                    </select>
+                                </div>
+
+                                <div class="col-xxl-2 col-sm-3">
+                                    <button type="button" class="btn btn-primary w-100" onclick="filterKaryawan()">
+                                        <i class="ri-equalizer-fill me-1 align-bottom"></i> Tampilkan
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="card-body pt-0">
+                        <ul class="nav nav-tabs nav-tabs-custom nav-success mb-3" role="tablist">
+                            <li class="nav-item">
+                                <a class="nav-link active py-2" data-bs-toggle="tab" href="#tabAll" role="tab">🧾 Semua Karyawan</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link py-2" data-bs-toggle="tab" href="#tabKMJ" role="tab">🏢 Mitra KMJ</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link py-2" data-bs-toggle="tab" href="#tabFortuna" role="tab">🚚 Mitra Fortuna</a>
+                            </li>
+                        </ul>
+
+                        <div class="tab-content">
+                            @foreach (['tabAll' => 'Semua Karyawan', 'tabKMJ' => 'Mitra KMJ', 'tabFortuna' => 'Mitra Fortuna'] as $tabId => $label)
+                            <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }}" id="{{ $tabId }}" role="tabpanel">
+                                <div class="table-responsive table-card">
+                                    <table class="table table-nowrap align-middle" id="{{ $tabId }}Table">
+                                        <thead class="table-light text-center text-uppercase">
+                                            <tr>
+                                                <th>Nama</th>
+                                                <th>Mitra</th>
+                                                <th>NIK BAS</th>
+                                                <th>NIK OS</th>
+                                                <th>Jenis Kelamin</th>
+                                                <th>Grup</th>
+                                                <th>Bagian</th>
+                                                <th>Status</th>
+                                                <th>Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="list text-center">
+                                            <!-- Baris dinamis via JS -->
+                                        </tbody>
+                                    </table>
+                                    <div id="paginationWrapper" class="mt-3 text-center"></div>
+                                    <div class="noresult text-center py-4" style="display:none">
+                                        <lord-icon src="https://cdn.lordicon.com/msoeawqm.json" trigger="loop" colors="primary:#405189,secondary:#0ab39c" style="width:75px;height:75px">
+                                        </lord-icon>
+                                        <h5 class="mt-2">Data Tidak Ditemukan</h5>
+                                        <p class="text-muted">Silakan periksa kembali pencarian atau filter status.</p>
+                                    </div>
+                                    <div class="modal fade" id="statusModal" tabindex="-1" aria-labelledby="statusLabel" aria-hidden="true">
+                                        <div class="modal-dialog modal-sm">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title" id="statusLabel">Ubah Status Karyawan</h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <form id="statusForm">
+                                                        <input type="hidden" name="employee_id" id="statusEmployeeId">
+                                                        <div class="mb-3">
+                                                            <label for="newStatus" class="form-label">Pilih Status</label>
+                                                            <select class="form-select" name="new_status" id="newStatus" required>
+                                                                <option value="">-- Pilih Status --</option>
+                                                                <option value="aktif">Aktif</option>
+                                                                <option value="non aktif">Non Aktif</option>
+                                                                <option value="terminated">Terminated</option>
+                                                            </select>
+                                                        </div>
+                                                        <div class="mb-3" id="reasonWrapper" style="display:none;">
+                                                            <label for="statusReason" class="form-label">Alasan Perubahan Status</label>
+                                                            <textarea class="form-control" name="reason" id="statusReason" maxlength="200" placeholder="Contoh: kontrak berakhir, resign, pelanggaran, dll..."></textarea>
+                                                        </div>
+
+                                                        <div class="text-end">
+                                                            <button type="submit" class="btn btn-success">Simpan</button>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
     </div>
@@ -515,74 +665,7 @@
             });
         }
 
-        function loadDashboardSummary() {
-            $.ajax({
-                url: "{{url('/admin/api/dashboard/summary')}}",
-                method: "GET",
-                dataType: "json",
-                success: function(data) {
-                    // Tampilkan data summary di elemen HTML
-                    $('#total_karyawan').text(data.totalEmployees);
-                    $('#activePlanningCount').text(data.activePlanningCount);
-                    $('#totalKebutuhanHariIni').text(data.totalKebutuhanHariIni);
-                    $('#totalSudahDipplotHariIni').text(data.totalSudahDipplotHariIni);
-                    $('#totalBelumDipplotHariIni').text(data.totalBelumDipplotHariIni);
 
-                    const planningList = $('#activePlanningList');
-                    planningList.empty(); // Bersihkan dulu
-
-                    data.activePlanning.forEach(item => {
-                        const start = new Date(item.start_date);
-                        const end = new Date(item.end_date);
-
-                        // Format tanggal
-                        const day = ('0' + start.getDate()).slice(-2);
-                        const month = ('0' + (start.getMonth() + 1)).slice(-2);
-                        const year = start.getFullYear().toString().slice(-2);
-                        const dayName = start.toLocaleString('en-US', {
-                            weekday: 'short'
-                        }); // Mon, Tue, etc
-
-                        const tanggalDisplay = `${day}-${month}-${year}`;
-
-                        const html = `
-                    <li class="list-group-item ps-0">
-                        <div class="row align-items-center g-3">
-                            <div class="col-auto">
-                                <div class="avatar-sm p-1 py-2 h-auto bg-light rounded-3 shadow">
-                                    <div class="text-center">
-                                        <h5 class="mb-0">${day}</h5>
-                                        <div class="text-muted">${dayName}</div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col">
-                                <h5 class="text-muted mt-0 mb-1 fs-13">
-                                    ${tanggalDisplay} (${item.group}) - ${item.jumlah_karyawan} Orang
-                                </h5>
-                                <p class="text-reset fs-14 mb-0">
-                                    Shift ${item.shift} - ${item.kode_bagian} - ${item.kode_jabatan}
-                                </p>
-                            </div>
-                        </div>
-                    </li>
-                    `;
-
-                        planningList.append(html);
-                    });
-
-                    // Render ApexCharts grafikRange
-                    renderChart(data.grafikRange);
-
-                    allPlanningData = data.activePlanning;
-                    renderPlanningPage();
-
-                },
-                error: function(err) {
-                    console.error('Error loading dashboard summary', err);
-                }
-            });
-        }
 
         $(document).on('click', '.page-link', function(e) {
             e.preventDefault();
@@ -595,71 +678,341 @@
             }
         });
 
-
-
-        // Fungsi untuk render grafik dengan ApexCharts
-        function renderChart(grafikRange) {
-            // Mapping data untuk series dan kategori
-            const categories = grafikRange.map(d => d.tanggal);
-            const kebutuhanData = grafikRange.map(d => d.kebutuhan);
-            const sudahDipplotData = grafikRange.map(d => d.sudah_dipplot);
-            const sisaData = grafikRange.map(d => d.sisa);
-
-            const options = {
-                chart: {
-                    type: 'bar',
-                    height: 350,
-                    stacked: true,
-                },
-                series: [{
-                        name: 'Sudah Diplotting',
-                        data: sudahDipplotData,
-                    },
-                    {
-                        name: 'Sisa Kebutuhan',
-                        data: sisaData,
-                    }
-                ],
-                xaxis: {
-                    categories: categories,
-                    title: {
-                        text: 'Tanggal'
-                    }
-                },
-                yaxis: {
-                    title: {
-                        text: 'Jumlah Karyawan'
-                    },
-                    min: 0,
-                    forceNiceScale: true,
-                },
-                legend: {
-                    position: 'top',
-                },
-                colors: ['#34c38f', '#f46a6a'],
-                tooltip: {
-                    y: {
-                        formatter: function(val) {
-                            return val + " orang";
-                        }
-                    }
-                }
-            };
-
-            // Render chart di div #grafikRange
-            if (window.chart) {
-                window.chart.updateOptions(options);
-            } else {
-                window.chart = new ApexCharts(document.querySelector("#grafikRange"), options);
-                window.chart.render();
-            }
-        }
-
-
         // Load data awal
         loadDashboardSummary();
-
-
     });
+
+
+    function loadDashboardSummary() {
+        const startDate = $('#startDateFilter').val();
+        const endDate = $('#endDateFilter').val();
+        const group = $('#groupFilter').val();
+
+        $.ajax({
+            url: "{{ url('/admin/api/dashboard/summary') }}",
+            method: "GET",
+            data: {
+                start_date: startDate,
+                end_date: endDate,
+                group: group
+            },
+            dataType: "json",
+            success: function(data) {
+                // 🧮 Update summary metrics
+                $('#total_karyawan').text(data.totalEmployees);
+                $('#activePlanningCount').text(data.activePlanningCount);
+                $('#totalKebutuhanHariIni').text(data.totalKebutuhanHariIni);
+                $('#totalSudahDipplotHariIni').text(data.totalSudahDipplotHariIni);
+                $('#totalBelumDipplotHariIni').text(data.totalBelumDipplotHariIni);
+
+                // 📋 Update planning list
+                const planningList = $('#activePlanningList');
+                planningList.empty();
+
+                data.todaySummary.forEach(function(item) {
+                    const start = new Date(item.start_date);
+                    const day = String(start.getDate()).padStart(2, '0');
+                    const month = String(start.getMonth() + 1).padStart(2, '0');
+                    const year = String(start.getFullYear()).slice(-2);
+                    const dayName = start.toLocaleString('id-ID', {
+                        weekday: 'short'
+                    });
+                    const tanggalDisplay = `${day}-${month}-${year}`;
+
+                    const html = `
+                <li class="list-group-item ps-0">
+                    <div class="row align-items-center g-3">
+                        <div class="col-auto">
+                            <div class="avatar-sm p-1 py-2 h-auto bg-light rounded-3 shadow">
+                                <div class="text-center">
+                                    <h5 class="mb-0">${day}</h5>
+                                    <div class="text-muted">${dayName}</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <h5 class="text-muted mt-0 mb-1 fs-13">
+                                ${tanggalDisplay} (${item.group}) - ${item.jumlah_karyawan} Orang
+                            </h5>
+                            <p class="text-reset fs-14 mb-0">
+                                Shift ${item.shift} - ${item.kode_bagian} - ${item.kode_jabatan}
+                            </p>
+                        </div>
+                    </div>
+                </li>`;
+                    planningList.append(html);
+                });
+
+                // 📊 Update charts
+                renderGroupCharts(data.grafikGroupByTanggalPerGrup);
+            },
+            error: function(err) {
+                console.error('Gagal memuat ringkasan dashboard:', err);
+            }
+        });
+    }
+
+    function renderGroupCharts(grafikGroupByTanggalPerGrup = {}) {
+        const groupNames = ['A', 'B', 'C', 'N'];
+
+        groupNames.forEach(function(group) {
+            const groupKey = `GRUP ${group}`;
+            const groupData = grafikGroupByTanggalPerGrup[groupKey] || {}; // Default ke object kosong
+
+            const categories = Object.keys(groupData);
+            const sudahDipplotData = [];
+            const sisaData = [];
+
+            if (categories.length === 0) {
+                // Tetap render chart dengan dummy data jika grup belum ada
+                categories.push('Kosong');
+                sudahDipplotData.push(0);
+                sisaData.push(0);
+            } else {
+                categories.forEach(function(tanggal) {
+                    const entries = groupData[tanggal] || [];
+
+                    const totalSudah = entries.reduce((sum, item) => sum + (item?.sudah_dipplot || 0), 0);
+                    const totalSisa = entries.reduce((sum, item) => sum + (item?.sisa || 0), 0);
+
+                    sudahDipplotData.push(totalSudah);
+                    sisaData.push(totalSisa);
+                });
+            }
+
+            const chartElement = document.querySelector(`#grafikGroup${group}`);
+            if (grafikGroupCharts[group]) {
+                grafikGroupCharts[group].updateOptions({
+                    series: [{
+                            name: 'Sudah Diplotting',
+                            data: sudahDipplotData
+                        },
+                        {
+                            name: 'Sisa Kebutuhan',
+                            data: sisaData
+                        }
+                    ],
+                    xaxis: {
+                        categories: categories
+                    }
+                });
+            } else {
+                const options = {
+                    chart: {
+                        type: 'bar',
+                        height: 300,
+                        stacked: true
+                    },
+                    series: [{
+                            name: 'Sudah Diplotting',
+                            data: sudahDipplotData
+                        },
+                        {
+                            name: 'Sisa Kebutuhan',
+                            data: sisaData
+                        }
+                    ],
+                    xaxis: {
+                        categories: categories
+                    },
+                    yaxis: {
+                        title: {
+                            text: 'Jumlah Karyawan'
+                        }
+                    },
+                    legend: {
+                        position: 'top'
+                    },
+                    colors: ['#34c38f', '#f46a6a'],
+                    tooltip: {
+                        y: {
+                            formatter: val => `${val} orang`
+                        }
+                    }
+                };
+
+                grafikGroupCharts[group] = new ApexCharts(chartElement, options);
+                grafikGroupCharts[group].render();
+            }
+        });
+    }
+
+    let grafikGroupCharts = {};
+
+    $('#applyFilterBtn').on('click', function() {
+        loadDashboardSummary();
+    });
+</script>
+<script>
+    let tables = {
+        tabAllTable: [],
+        tabKMJTable: [],
+        tabFortunaTable: []
+    };
+    let currentPage = 1; // Move currentPage outside of renderKaryawan
+
+    $(document).ready(function() {
+        loadKaryawanData();
+
+        // Trigger search saat enter ditekan
+        $('#searchKaryawan').on('keypress', function(e) {
+            if (e.which === 13) filterKaryawan();
+        });
+
+        $('.nav-link[data-bs-toggle="tab"]').on('shown.bs.tab', function(e) {
+            const targetTab = $(e.target).attr('href').replace('#', '') + 'Table';
+            let dataToRender = [];
+
+            if (targetTab === 'tabAllTable') {
+                dataToRender = tables.tabAllTable;
+            } else if (targetTab === 'tabKMJTable') {
+                dataToRender = tables.tabKMJTable;
+            } else if (targetTab === 'tabFortunaTable') {
+                dataToRender = tables.tabFortunaTable;
+            }
+
+            paginate(targetTab, dataToRender);
+        });
+    });
+
+    $('#newStatus').on('change', function() {
+        const val = $(this).val();
+        if (val === 'non aktif' || val === 'terminated') {
+            $('#reasonWrapper').slideDown();
+        } else {
+            $('#reasonWrapper').slideUp();
+            $('#statusReason').val('');
+        }
+    });
+
+    function loadKaryawanData() {
+        $.getJSON('{{ url("admin/employees") }}', function(data) {
+            const activeKaryawan = data.filter(function(karyawan) {
+                return karyawan.status === 'aktif';
+            });
+
+            window.allKaryawanData = activeKaryawan; // simpan hanya yang aktif
+            renderKaryawan(activeKaryawan); // kirim hanya yang aktif
+        });
+
+    }
+
+    $(document).on('click', '.btn-ubah-status', function() {
+        const id = $(this).data('id');
+        const nama = $(this).data('nama');
+
+        $('#statusEmployeeId').val(id);
+        $('#newStatus').val('');
+        $('#statusLabel').text(`Ubah Status: ${nama}`);
+        $('#statusModal').modal('show');
+    });
+
+    $('#statusForm').submit(function(e) {
+        e.preventDefault();
+        const id = $('#statusEmployeeId').val();
+        const status = $('#newStatus').val();
+
+        if (!status) return Swal.fire('Oops', 'Pilih status terlebih dahulu.', 'warning');
+
+        $.ajax({
+            url: "{{url('/admin/update/status')}}/" + id,
+            method: 'POST',
+            data: {
+                new_status: status,
+                reason: $('#statusReason').val().trim(), // kirim alasan
+                _token: '{{ csrf_token() }}'
+            },
+            success: function(res) {
+                Swal.fire('Berhasil', 'Status karyawan berhasil diupdate.', 'success');
+                $('#statusModal').modal('hide');
+                loadKaryawanData();
+            },
+            error: function() {
+                Swal.fire('Gagal', 'Terjadi kesalahan saat mengubah status.', 'error');
+            }
+        });
+    });
+
+    function filterKaryawan() {
+        const keyword = $('#searchKaryawan').val().toLowerCase();
+        const status = $('#filterStatus').val();
+
+        const filtered = window.allKaryawanData.filter(item => {
+            const matchText = [
+                item.nama_karyawan, item.nik_bas, item.nik_os, item.nama_vendor
+            ].some(val => val?.toLowerCase().includes(keyword));
+
+            const matchStatus = (status === 'all' || status === '') ? true : item.status?.toLowerCase() === status;
+
+            return matchText && matchStatus;
+        });
+
+        renderKaryawan(filtered);
+    }
+
+    function paginate(tableId, rows) {
+        const itemsPerPage = 20;
+        const totalPages = Math.ceil(rows.length / itemsPerPage);
+        const start = (currentPage - 1) * itemsPerPage;
+        const end = start + itemsPerPage;
+        const currentRows = rows.slice(start, end);
+
+        $(`#${tableId} tbody`).html(currentRows.join(''));
+
+        const pagination = [];
+        for (let i = 1; i <= totalPages; i++) {
+            pagination.push(`<button class="page-btn btn btn-sm btn-outline-primary mx-1 ${i === currentPage ? 'active' : ''}" data-page="${i}">${i}</button>`);
+        }
+
+        $('#paginationWrapper').html(pagination.join(''));
+
+        $('.page-btn').on('click', function() {
+            currentPage = Number($(this).data('page'));
+            paginate(tableId, rows);
+        });
+    }
+
+    function renderKaryawan(data) {
+        tables = {
+            tabAllTable: [],
+            tabKMJTable: [],
+            tabFortunaTable: []
+        };
+        currentPage = 1; // Reset currentPage when rendering new data
+
+        if (!data.length) {
+            $('.noresult').show();
+            $('#tabAllTable tbody, #tabKMJTable tbody, #tabFortunaTable tbody').empty();
+            $('#paginationWrapper').empty();
+            return;
+        }
+
+        $('.noresult').hide();
+
+        data.forEach(item => {
+            const row = `
+            <tr>
+                <td>${item.nama_karyawan ?? '-'}</td>
+                <td>${item.nama_vendor ?? '-'}</td>
+                <td>${item.nik_bas ?? '-'}</td>
+                <td>${item.nik_os ?? '-'}</td>
+                <td>${item.jenis_kelamin ?? '-'}</td>
+                <td>${item.grup ?? '-'}</td>
+                <td>${item.kode_bagian ?? '-'}</td>
+                <td><span class="badge bg-${item.status === 'aktif' ? 'success' : item.status === 'terminated' ? 'danger' : 'secondary'}">${item.status ?? '-'}</span></td>
+                <td>
+                  <button class="btn btn-sm btn-info" onclick="location.href='{{ url('admin/employees') }}/'+${item.id}+'/detail'">
+                    Lihat Data
+                   </button>  
+                </td>
+            </tr>
+        `;
+            tables.tabAllTable.push(row);
+            if ((item.nama_vendor || '').toLowerCase().includes('kmj')) tables.tabKMJTable.push(row);
+            if ((item.nama_vendor || '').toLowerCase().includes('fortuna')) tables.tabFortunaTable.push(row);
+        });
+
+        paginate('tabAllTable', tables.tabAllTable); // You can adapt this for other tabs as well
+    }
 </script>
 @endsection

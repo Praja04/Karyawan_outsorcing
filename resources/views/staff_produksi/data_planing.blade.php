@@ -146,7 +146,7 @@
     $(document).ready(function() {
         let allRows = Array.from($('#ticket-list-data tr'));
         let filteredRows = [...allRows];
-        const perPage = 10;
+        const perPage = 12;
         let currentPage = 1;
         const $tableBody = $('#ticket-list-data');
         const $pagination = $('#planningPagination');

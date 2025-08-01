@@ -138,4 +138,13 @@
 
     </div>
 </div>
+
+<script>
+    $(document).ready(function() {
+        $('input[type="date"]').on('click', function() {
+            // Coba munculkan datepicker secara eksplisit
+            this.showPicker?.(); // Untuk browser yang support
+        });
+    });
+</script>
 @endsection

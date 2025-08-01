@@ -168,8 +168,23 @@ class SupervisorController extends Controller
     public function showPlotting($id)
     {
         $planning = Planning::with('plottingKehadiran.employee')->findOrFail($id);
+        // Hitung jumlah yang hadir dan tidak hadir
+        $jumlahHadir = $planning->plottingKehadiran()
+            ->where('status_konfirmasi', 'LIKE', 'HADIR%')
+            ->count();
 
-        return view('admin_produksi.plotting_view', compact('planning'));
+        $jumlahTidakHadir = $planning->plottingKehadiran()
+            ->where('status_konfirmasi', 'LIKE', 'TIDAK HADIR%')
+            ->count();
+        $jumlahBelumKonfirmasi = $planning->plottingKehadiran()
+            ->where('status_konfirmasi', NULL)
+            ->count();
+
+        return view('admin_produksi.plotting_view', compact('planning',
+            'jumlahHadir',
+            'jumlahTidakHadir',
+            'jumlahBelumKonfirmasi'
+        ));
     }
 
     public function downloadTemplate()

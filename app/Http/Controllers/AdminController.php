@@ -481,19 +481,23 @@ class AdminController extends Controller
         }
     }
 
-    //api dashboard
-    public function Api_Summary_Dashboard_admin_hrd()
+    public function Api_Summary_Dashboard_admin_hrd(Request $request)
     {
         $today = Carbon::today();
 
-        // Total semua karyawan
+        $start = $request->filled('start_date')
+        ? Carbon::parse($request->start_date)
+            : $today->copy()->subDays(7);
+
+        $end = $request->filled('end_date')
+        ? Carbon::parse($request->end_date)
+            : $today->copy()->addDays(4);
+
+        $groupFilter = strtoupper(trim($request->input('group', 'ALL')));
+
         $totalEmployees = Employee::count();
+        $activePlannings = Planning::whereDate('end_date', '>', $today)->get();
 
-        // Planning yang aktif hari ini
-        $activePlannings = Planning::whereDate('end_date', '>', $today)
-            ->get();
-
-        // Ringkasan hari ini
         $totalKebutuhanHariIni = 0;
         $totalSudahDipplotHariIni = 0;
 
@@ -504,8 +508,13 @@ class AdminController extends Controller
 
             return [
                 'id' => $planning->id,
-                'tanggal' => Carbon::parse($planning->start_date)->format('Y-m-d') . ' s.d. ' . Carbon::parse($planning->end_date)->format('Y-m-d'),
-                'kebutuhan' => $planning->jumlah_karyawan,
+                'group' => $planning->group,
+                'shift' => $planning->shift,
+                'kode_bagian' => $planning->kode_bagian,
+                'kode_jabatan' => $planning->kode_jabatan,
+                'start_date' => $planning->start_date,
+                'end_date' => $planning->end_date,
+                'jumlah_karyawan' => $planning->jumlah_karyawan,
                 'sudah_dipplot' => $jumlahDipplot,
                 'sisa' => max($planning->jumlah_karyawan - $jumlahDipplot, 0),
             ];
@@ -513,24 +522,35 @@ class AdminController extends Controller
 
         $totalBelumDipplotHariIni = max($totalKebutuhanHariIni - $totalSudahDipplotHariIni, 0);
 
-        // Grafik 7 hari ke depan
-        $range = collect();
-        for ($i = 0; $i < 7; $i++) {
-            $tanggal = $today->copy()->addDays($i)->toDateString();
+        $grafikGroup = [];
+
+        while ($start->lte($end)) {
+            $tanggal = $start->toDateString();
 
             $plannings = Planning::whereDate('start_date', '<=', $tanggal)
                 ->whereDate('end_date', '>=', $tanggal)
                 ->get();
 
-            $totalKebutuhan = $plannings->sum('jumlah_karyawan');
-            $totalDipplot = $plannings->sum(fn ($p) => $p->plottingKehadiran()->count());
+            foreach ($plannings as $planning) {
+                $jumlahDipplot = $planning->plottingKehadiran()
+                    ->whereDate('tanggal', $tanggal)
+                    ->count();
 
-            $range->push([
-                'tanggal' => $tanggal,
-                'kebutuhan' => $totalKebutuhan,
-                'sudah_dipplot' => $totalDipplot,
-                'sisa' => max($totalKebutuhan - $totalDipplot, 0),
-            ]);
+                $groupName = strtoupper(trim($planning->group ?? 'UNDEFINED'));
+                $shift = (int) ($planning->shift ?? 0);
+
+                if ($groupFilter !== 'ALL' && $groupName !== 'GRUP ' . $groupFilter) {
+                    continue;
+                }
+
+                $grafikGroup[$groupName][$tanggal][] = [
+                    'shift' => $shift,
+                    'sudah_dipplot' => $jumlahDipplot,
+                    'sisa' => max($planning->jumlah_karyawan - $jumlahDipplot, 0),
+                ];
+            }
+
+            $start->addDay();
         }
 
         return response()->json([
@@ -541,14 +561,59 @@ class AdminController extends Controller
             'totalKebutuhanHariIni' => $totalKebutuhanHariIni,
             'totalSudahDipplotHariIni' => $totalSudahDipplotHariIni,
             'totalBelumDipplotHariIni' => $totalBelumDipplotHariIni,
-            'grafikRange' => $range,
+            'grafikGroupByTanggalPerGrup' => $grafikGroup,
         ]);
     }
 
     public function planningDetail($id)
     {
         $planning = Planning::with('plottingKehadiran.employee')->findOrFail($id);
-        return view('admin.hrd.plotting_view', compact('planning'));
+        $jumlahHadir = $planning->plottingKehadiran()
+            ->where('status_konfirmasi', 'LIKE', 'HADIR%')
+            ->count();
+
+        $jumlahTidakHadir = $planning->plottingKehadiran()
+            ->where('status_konfirmasi', 'LIKE', 'TIDAK HADIR%')
+            ->count();
+        $jumlahBelumKonfirmasi = $planning->plottingKehadiran()
+            ->where('status_konfirmasi', NULL)
+            ->count();
+        return view('admin.hrd.plotting_view', compact('planning',
+            'jumlahHadir',
+            'jumlahTidakHadir',
+            'jumlahBelumKonfirmasi'
+        ));
     }
-    
+
+    public function showDetail($id)
+    {
+        $employee = Employee::with([
+            'plottingKehadiran.planning'
+        ])->findOrFail($id);
+
+        $plotCount = $employee->plottingKehadiran->count();
+        $uniquePlannings = $employee->plottingKehadiran->pluck('planning_id')->unique()->count();
+
+        // Hitung jumlah hadir & tidak hadir
+        $hadirCount = $employee->plottingKehadiran->where('status_konfirmasi', 'hadir')->count();
+        $tidakHadirCount = $employee->plottingKehadiran->where('status_konfirmasi', 'tidak hadir')->count();
+        $tidakKonfirmasiCount = $employee->plottingKehadiran->where('status_konfirmasi', null)->count();
+        // Alasan tidak hadir terbanyak
+        $topReason = $employee->plottingKehadiran
+            ->where('status_konfirmasi', 'tidak hadir')
+            ->groupBy('reason')
+            ->sortByDesc(fn ($group) => count($group))
+            ->keys()
+            ->first();
+
+        return view('admin.employee_detail', compact(
+            'employee',
+            'plotCount',
+            'uniquePlannings',
+            'hadirCount',
+            'tidakHadirCount',
+            'topReason',
+            'tidakKonfirmasiCount'
+        ));
+    }
 }

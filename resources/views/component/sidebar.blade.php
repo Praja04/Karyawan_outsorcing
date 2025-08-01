@@ -44,6 +44,11 @@
                 @elseif(Session::get('user_role') === 'admin_hrd_mitra_kmj' )
                 <li class="menu-title"><span data-key="t-menu">Menu</span></li>
                 <li class="nav-item">
+                    <a class="nav-link menu-link" href="{{ url('admin/dashboard') }}">
+                        <i class="mdi mdi-card-account-details"></i> <span data-key="t-widgets">Dashboard</span>
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link menu-link" href="{{ url('admin/hrd/mitra/kmj') }}">
                         <i class="mdi mdi-card-account-details"></i> <span data-key="t-widgets">Manage Karyawan</span>
                     </a>
@@ -55,6 +60,11 @@
                 </li>
                 @elseif(Session::get('user_role') === 'admin_hrd_mitra_fortuna' )
                 <li class="menu-title"><span data-key="t-menu">Menu</span></li>
+                <li class="nav-item">
+                    <a class="nav-link menu-link" href="{{ url('admin/dashboard') }}">
+                        <i class="mdi mdi-card-account-details"></i> <span data-key="t-widgets">Dashboard</span>
+                    </a>
+                </li>
                 <li class="nav-item">
                     <a class="nav-link menu-link" href="{{ url('admin/hrd/mitra/fortuna') }}">
                         <i class="mdi mdi-card-account-details"></i> <span data-key="t-widgets">Manage Karyawan</span>
