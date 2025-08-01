@@ -186,9 +186,7 @@
                     </div>
 
                     <div class="row">
-
-
-                        <div class="col-xl-5">
+                        <div class="col-xl-5 d-none" aria-hidden="true">
                             <div class="card">
                                 <div class="card-header align-items-center d-flex">
                                     <h4 class="card-title mb-0 flex-grow-1">
