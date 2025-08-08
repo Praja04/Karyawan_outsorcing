@@ -6,13 +6,16 @@ use Illuminate\Http\Request;
 use App\Models\Employee;
 use App\Models\EmployeeSchedule;
 use App\Models\Planning;
+use App\Models\PlottingKehadiran;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use Illuminate\Support\Facades\Validator;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Response;
 use Carbon\Carbon;
+use Carbon\CarbonPeriod;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Collection;
 
 
 
@@ -487,24 +490,38 @@ class AdminController extends Controller
 
         $start = $request->filled('start_date')
         ? Carbon::parse($request->start_date)
-            : $today->copy()->subDays(7);
+        : $today->copy()->subDays(7);
 
         $end = $request->filled('end_date')
         ? Carbon::parse($request->end_date)
-            : $today->copy()->addDays(4);
+        : $today->copy()->addDays(4);
 
-        $groupFilter = strtoupper(trim($request->input('group', 'ALL')));
+      
+        // Ambil semua planning dalam range filter
+        $activePlannings = Planning::whereDate('start_date', '<=', $end)
+        ->whereDate('end_date', '>=', $start)
+        ->get();
 
         $totalEmployees = Employee::count();
-        $activePlannings = Planning::whereDate('end_date', '>', $today)->get();
 
-        $totalKebutuhanHariIni = 0;
-        $totalSudahDipplotHariIni = 0;
+        // Ambil semua plotting dalam range tanggal
+        $allPlottings = PlottingKehadiran::whereBetween('tanggal', [$start, $end])->get();
 
-        $todaySummary = $activePlannings->map(function ($planning) use (&$totalKebutuhanHariIni, &$totalSudahDipplotHariIni) {
-            $jumlahDipplot = $planning->plottingKehadiran()->count();
-            $totalKebutuhanHariIni += $planning->jumlah_karyawan;
-            $totalSudahDipplotHariIni += $jumlahDipplot;
+        // Hitung total kebutuhan hari ini
+        $totalKebutuhanHariIni = $activePlannings->where('start_date', '<=', $today)->where('end_date', '>=', $today)->sum('jumlah_karyawan');
+
+        $totalSudahDipplotHariIni = $allPlottings->where('tanggal', $today->toDateString())->count();
+
+        $totalBelumDipplotHariIni = max($totalKebutuhanHariIni - $totalSudahDipplotHariIni, 0);
+
+        // Summary hari ini
+        $todaySummary = $activePlannings->filter(function ($p) use ($today) {
+            return Carbon::parse($p->start_date)->lte($today) && Carbon::parse($p->end_date)->gte($today);
+        })->map(function ($planning) use ($today, $allPlottings) {
+            $countPlotting = $allPlottings
+            ->where('planning_id', $planning->id)
+            ->where('tanggal', $today->toDateString())
+            ->count();
 
             return [
                 'id' => $planning->id,
@@ -515,43 +532,38 @@ class AdminController extends Controller
                 'start_date' => $planning->start_date,
                 'end_date' => $planning->end_date,
                 'jumlah_karyawan' => $planning->jumlah_karyawan,
-                'sudah_dipplot' => $jumlahDipplot,
-                'sisa' => max($planning->jumlah_karyawan - $jumlahDipplot, 0),
+                'sudah_dipplot' => $countPlotting,
+                'sisa' => max($planning->jumlah_karyawan - $countPlotting, 0),
             ];
-        });
+        })->values();
 
-        $totalBelumDipplotHariIni = max($totalKebutuhanHariIni - $totalSudahDipplotHariIni, 0);
+        $plannings = Planning::whereDate('start_date', '<=', $end)
+        ->whereDate('end_date', '>=', $start)
+        ->get();
+        $grafikGroupByTanggalPerGrup = [];
 
-        $grafikGroup = [];
+        foreach ($plannings as $plan) {
+            $start = Carbon::parse($plan->start_date);
+            $end = Carbon::parse($plan->end_date);
+            $dates = new Collection();
 
-        while ($start->lte($end)) {
-            $tanggal = $start->toDateString();
-
-            $plannings = Planning::whereDate('start_date', '<=', $tanggal)
-                ->whereDate('end_date', '>=', $tanggal)
-                ->get();
-
-            foreach ($plannings as $planning) {
-                $jumlahDipplot = $planning->plottingKehadiran()
-                    ->whereDate('tanggal', $tanggal)
-                    ->count();
-
-                $groupName = strtoupper(trim($planning->group ?? 'UNDEFINED'));
-                $shift = (int) ($planning->shift ?? 0);
-
-                if ($groupFilter !== 'ALL' && $groupName !== 'GRUP ' . $groupFilter) {
-                    continue;
-                }
-
-                $grafikGroup[$groupName][$tanggal][] = [
-                    'shift' => $shift,
-                    'sudah_dipplot' => $jumlahDipplot,
-                    'sisa' => max($planning->jumlah_karyawan - $jumlahDipplot, 0),
-                ];
+            // buat range tanggal planning
+            for ($date = $start->copy(); $date->lte($end); $date->addDay()) {
+                $dates->push($date->format('Y-m-d'));
             }
 
-            $start->addDay();
+            foreach ($dates as $tgl) {
+                $sudahDipplot = PlottingKehadiran::where('planning_id', $plan->id)->count();
+                $sisa = max($plan->jumlah_karyawan - $sudahDipplot, 0);
+
+                $grafikGroupByTanggalPerGrup[$plan->group][$tgl][] = [
+                    'shift' => (int) $plan->shift,
+                    'sudah_dipplot' => $sudahDipplot,
+                    'sisa' => $sisa
+                ];
+            }
         }
+
 
         return response()->json([
             'totalEmployees' => $totalEmployees,
@@ -561,9 +573,14 @@ class AdminController extends Controller
             'totalKebutuhanHariIni' => $totalKebutuhanHariIni,
             'totalSudahDipplotHariIni' => $totalSudahDipplotHariIni,
             'totalBelumDipplotHariIni' => $totalBelumDipplotHariIni,
-            'grafikGroupByTanggalPerGrup' => $grafikGroup,
+            'grafikGroupByTanggalPerGrup' => $grafikGroupByTanggalPerGrup,
         ]);
     }
+
+
+
+
+
 
     public function planningDetail($id)
     {

@@ -161,7 +161,7 @@
                             <select id="groupFilter" class="form-select">
                                 <option value="ALL">Semua Group</option>
                                 @foreach (['A', 'B', 'C', 'N'] as $group)
-                                <option value="GROUP {{ $group }}">Group {{ $group }}</option>
+                                <option value="GRUP {{ $group }}">Group {{ $group }}</option>
                                 @endforeach
                             </select>
                         </div>
