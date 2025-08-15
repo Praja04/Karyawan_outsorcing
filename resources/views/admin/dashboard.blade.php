@@ -498,38 +498,61 @@
             const end = start + perPage;
             $tableBody.empty().append(filteredRows.slice(start, end));
 
-            // Toggle Noresult
             $('.noresult').toggle(filteredRows.length === 0);
-
-            // Render ulang pagination
             $pagination.empty();
 
             if (totalPages <= 1) return;
 
-            // Tombol ←
-            $pagination.append(`
+            const maxVisiblePages = 5;
+            let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+            let endPage = startPage + maxVisiblePages - 1;
+
+            if (endPage > totalPages) {
+                endPage = totalPages;
+                startPage = Math.max(1, endPage - maxVisiblePages + 1);
+            }
+
+            // Tombol ke halaman pertama
+            if (startPage > 1) {
+                $pagination.append(`
+            <li class="page-item">
+                <a class="page-link page-btn" href="#" data-page="1">1</a>
+            </li>
+            <li class="page-item disabled"><span class="page-link">...</span></li>
+        `);
+            }
+
+            // Nomor halaman aktif
+            for (let i = startPage; i <= endPage; i++) {
+                $pagination.append(`
+            <li class="page-item ${i === currentPage ? 'active' : ''}">
+                <a class="page-link page-btn" href="#" data-page="${i}">${i}</a>
+            </li>
+        `);
+            }
+
+            // Tombol ke halaman terakhir
+            if (endPage < totalPages) {
+                $pagination.append(`
+            <li class="page-item disabled"><span class="page-link">...</span></li>
+            <li class="page-item">
+                <a class="page-link page-btn" href="#" data-page="${totalPages}">${totalPages}</a>
+            </li>
+        `);
+            }
+
+                    // Tombol ← dan →
+                    $pagination.prepend(`
                 <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
                     <a class="page-link page-btn" href="#" data-page="${currentPage - 1}">←</a>
                 </li>
             `);
-
-            // Nomor halaman
-            for (let i = 1; i <= totalPages; i++) {
-                $pagination.append(`
-                    <li class="page-item ${i === currentPage ? 'active' : ''}">
-                        <a class="page-link page-btn" href="#" data-page="${i}">${i}</a>
-                    </li>
-                `);
-            }
-
-            // Tombol →
-            $pagination.append(`
+                    $pagination.append(`
                 <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
                     <a class="page-link page-btn" href="#" data-page="${currentPage + 1}">→</a>
                 </li>
             `);
 
-            // Event pagination
             $('.page-btn').click(function(e) {
                 e.preventDefault();
                 const target = Number($(this).data('page'));
