@@ -77,9 +77,15 @@
                                         <i class="ri-search-line search-icon"></i>
                                     </div>
                                 </div>
-                                <!--end col-->
+                                <!-- Filter Mitra -->
+                                <div class="col-xxl-3 col-sm-6">
+                                    <select id="filterMitra" class="form-select">
+                                        <option value="ALL">Semua Mitra</option>
+                                        <option value="KMJ">KMJ</option>
+                                        <option value="Fortuna">Fortuna</option>
+                                    </select>
+                                </div>
                             </div>
-                            <!--end row-->
                         </form>
                     </div>
                     <!--end card-body-->
@@ -91,6 +97,7 @@
                                         <th>No</th>
                                         <th>Nama Karyawan</th>
                                         <th>NIK OS</th>
+                                        <th>Mitra</th>
                                         <th>Tanggal Diinfokan</th>
                                         <th>Status Konfirmasi</th>
                                         <th>Reason</th>
@@ -102,6 +109,7 @@
                                         <td>{{ $index + 1 }}</td> <!-- Kolom No -->
                                         <td class="nama-karyawan">{{ $plot->employee->nama_karyawan }}</td>
                                         <td class="nik-os">{{ $plot->employee->nik_os }}</td>
+                                        <td class="nik-os">{{ $plot->employee->nama_vendor }}</td>
                                         <td class="tanggal">{{ $plot->tanggal }}</td>
                                         <td class="status-konfirmasi">
                                             @if ($plot->status_konfirmasi === 'hadir')
@@ -116,7 +124,7 @@
                                     </tr>
                                     @empty
                                     <tr>
-                                        <td colspan="5" class="text-center">Belum ada plotting.</td>
+                                        <td colspan="7" class="text-center">Belum ada plotting.</td>
                                     </tr>
                                     @endforelse
                                 </tbody>
@@ -196,6 +204,37 @@
                 $('.noresult').hide();
             }
         });
+
+        function filterTable() {
+            let keyword = $('#searchField').val().toLowerCase();
+            let filterMitra = $('#filterMitra').val();
+            let found = false;
+
+            $('#ticket-list-data tr').each(function() {
+                let rowText = $(this).text().toLowerCase();
+                let mitra = $(this).find('td:nth-child(4)').text().trim(); // kolom Mitra ada di kolom ke-4
+
+                let matchSearch = rowText.indexOf(keyword) > -1;
+                let matchMitra = (filterMitra === "ALL" || mitra === filterMitra);
+
+                if (matchSearch && matchMitra) {
+                    $(this).show();
+                    found = true;
+                } else {
+                    $(this).hide();
+                }
+            });
+
+            if (!found) {
+                $('.noresult').show();
+            } else {
+                $('.noresult').hide();
+            }
+        }
+
+        // Event listener
+        $('#searchField').on('keyup', filterTable);
+        $('#filterMitra').on('change', filterTable);
     });
 </script>
 @endsection
