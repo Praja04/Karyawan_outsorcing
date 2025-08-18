@@ -42,10 +42,10 @@ class ForemanController extends Controller
 
         // Ambil planning yang end_date >= hari ini
         $plannings = Planning::with('plottingKehadiran.employee')
-        ->where('group', $adminGroup);
-        // ->whereRaw('end_date >= DATE_SUB(?, INTERVAL 1 DAY)', [$today])
-        //     ->orderBy('start_date', 'desc')
-        //     ->get();
+            ->where('group', $adminGroup)
+            ->whereRaw('end_date >= DATE_SUB(?, INTERVAL 1 DAY)', [$today])
+            ->orderBy('start_date', 'desc')
+            ->get();
         // Ambil employees hanya dari grup yang sesuai
         // $employees = Employee::where('grup', $adminGroup)->get();
         $employees = Employee::get();
@@ -129,8 +129,8 @@ class ForemanController extends Controller
 
         $planning = Planning::findOrFail($request->planning_id);
         $existingCount = $planning->plottingKehadiran()
-        ->where('status_konfirmasi', 'NOT LIKE', 'TIDAK HADIR%')
-        ->count();
+            ->where('status_konfirmasi', 'NOT LIKE', 'TIDAK HADIR%')
+            ->count();
         $newCount = count($request->employee_ids);
 
         if (($existingCount + $newCount) > $planning->jumlah_karyawan) {
@@ -164,8 +164,8 @@ class ForemanController extends Controller
             }
 
             $message = "Hai *{$employee->nama_karyawan}*,\n\n"
-            . "Kamu dijadwalkan kerja tanggal *{$planning->start_date->format('d M')} s.d {$planning->end_date->format('d M')}* (Shift *{$planning->shift}*).\n\n"
-            . "Silakan klik salah satu tombol di bawah ini untuk konfirmasi:";
+                . "Kamu dijadwalkan kerja tanggal *{$planning->start_date->format('d M')} s.d {$planning->end_date->format('d M')}* (Shift *{$planning->shift}*).\n\n"
+                . "Silakan klik salah satu tombol di bawah ini untuk konfirmasi:";
 
             $keyboard = [
                 'keyboard' => [
@@ -327,6 +327,5 @@ class ForemanController extends Controller
             'jumlahTidakHadir',
             'jumlahBelumKonfirmasi'
         ));
-
     }
 }
