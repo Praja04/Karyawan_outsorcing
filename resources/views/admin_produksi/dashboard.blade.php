@@ -400,6 +400,98 @@
 <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 <script>
     $(document).ready(function() {
+        let allRows = Array.from($('#ticket-list-data tr'));
+        let filteredRows = [...allRows];
+        const perPage = 12;
+        let currentPage = 1;
+        const $tableBody = $('#ticket-list-data');
+        const $pagination = $('#planningPagination');
+
+        function renderTable() {
+            const totalPages = Math.ceil(filteredRows.length / perPage);
+            const start = (currentPage - 1) * perPage;
+            const end = start + perPage;
+            $tableBody.empty().append(filteredRows.slice(start, end));
+
+            $('.noresult').toggle(filteredRows.length === 0);
+            $pagination.empty();
+
+            if (totalPages <= 1) return;
+
+            const maxVisiblePages = 5;
+            let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+            let endPage = startPage + maxVisiblePages - 1;
+
+            if (endPage > totalPages) {
+                endPage = totalPages;
+                startPage = Math.max(1, endPage - maxVisiblePages + 1);
+            }
+
+            // Tombol ke halaman pertama
+            if (startPage > 1) {
+                $pagination.append(`
+            <li class="page-item">
+                <a class="page-link page-btn" href="#" data-page="1">1</a>
+            </li>
+            <li class="page-item disabled"><span class="page-link">...</span></li>
+        `);
+            }
+
+            // Nomor halaman aktif
+            for (let i = startPage; i <= endPage; i++) {
+                $pagination.append(`
+            <li class="page-item ${i === currentPage ? 'active' : ''}">
+                <a class="page-link page-btn" href="#" data-page="${i}">${i}</a>
+            </li>
+        `);
+            }
+
+            // Tombol ke halaman terakhir
+            if (endPage < totalPages) {
+                $pagination.append(`
+            <li class="page-item disabled"><span class="page-link">...</span></li>
+            <li class="page-item">
+                <a class="page-link page-btn" href="#" data-page="${totalPages}">${totalPages}</a>
+            </li>
+        `);
+            }
+
+            // Tombol ← dan →
+            $pagination.prepend(`
+                <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                    <a class="page-link page-btn" href="#" data-page="${currentPage - 1}">←</a>
+                </li>
+            `);
+            $pagination.append(`
+                <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+                    <a class="page-link page-btn" href="#" data-page="${currentPage + 1}">→</a>
+                </li>
+            `);
+
+            $('.page-btn').click(function(e) {
+                e.preventDefault();
+                const target = Number($(this).data('page'));
+                if (target >= 1 && target <= totalPages) {
+                    currentPage = target;
+                    renderTable();
+                }
+            });
+        }
+
+        // Pencarian
+        $('.search').on('keyup', function() {
+            const keyword = $(this).val().toLowerCase();
+            filteredRows = allRows.filter(row => $(row).text().toLowerCase().includes(keyword));
+            currentPage = 1;
+            renderTable();
+        });
+
+        // Render awal
+        renderTable();
+    });
+</script>
+<script>
+    $(document).ready(function() {
         // ===========================================
         // GLOBAL VARIABLES & STATE MANAGEMENT
         // ===========================================
@@ -1106,368 +1198,6 @@
             wrapper.innerHTML = paginationHTML;
         }
 
-
-        // ===========================================
-        // PLANNING TABLE PAGINATION FUNCTIONS
-        // ===========================================
-
-        function renderPlanningTable(plannings = null) {
-            const tbody = document.querySelector('#ticket-list-data');
-            if (!tbody) return;
-
-            // Use provided plannings or filtered plannings from STATE
-            const dataToRender = plannings || STATE.data.filteredPlannings;
-
-            if (!dataToRender || dataToRender.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="10" class="text-center py-4">Belum ada planning dibuat</td></tr>';
-                renderPlanningPagination(0);
-                return;
-            }
-
-            const startIndex = (STATE.pagination.planning.current - 1) * STATE.pagination.planning.perPage;
-            const endIndex = startIndex + STATE.pagination.planning.perPage;
-            const pagePlannings = dataToRender.slice(startIndex, endIndex);
-
-            const rows = pagePlannings.map((plan, index) => {
-                const globalIndex = startIndex + index + 1;
-                const startDate = new Date(plan.start_date);
-                const endDate = new Date(plan.end_date);
-                const now = new Date();
-
-                const isActive = now <= endDate;
-                const statusClass = isActive ? 'success' : 'secondary';
-                const statusText = isActive ? 'Aktif' : 'Tidak Aktif';
-
-                return `
-            <tr class="planning-row" style="opacity: 0; transform: translateY(10px);">
-                <td>${globalIndex}</td>
-                <td>${plan.group || '-'}</td>
-                <td>${plan.kode_bagian || '-'}</td>
-                <td>${plan.kode_jabatan || '-'}</td>
-                <td>${plan.jumlah_karyawan || 0}</td>
-                <td>${plan.shift || '-'}</td>
-                <td>${startDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</td>
-                <td>${endDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</td>
-                <td>
-                    <span class="badge bg-${statusClass}">${statusText}</span>
-                </td>
-                <td>
-                    <a href="{{ route('admin_produksi.plotting.show', $plan->id) }}" class="btn btn-info btn-sm">
-                        <i class="ri-eye-line"></i> View
-                    </a>
-                </td>
-            </tr>
-            `;
-            }).join('');
-
-            tbody.innerHTML = rows;
-
-            // Animate rows
-            setTimeout(() => {
-                $('.planning-row').each(function(index) {
-                    setTimeout(() => {
-                        $(this).css({
-                            opacity: '1',
-                            transform: 'translateY(0)',
-                            transition: 'all 0.3s ease-in-out'
-                        });
-                    }, index * 50);
-                });
-            }, 100);
-
-            renderPlanningPagination(dataToRender.length);
-        }
-
-        function renderPlanningPagination(totalPlannings) {
-            const totalPages = Math.ceil(totalPlannings / STATE.pagination.planning.perPage);
-            const wrapper = document.getElementById('planningPagination');
-
-            if (!wrapper) return;
-
-            if (totalPages <= 1) {
-                wrapper.innerHTML = '';
-                return;
-            }
-
-            const currentPage = STATE.pagination.planning.current;
-            let paginationHTML = '';
-
-            // Previous button
-            const prevDisabled = currentPage === 1 ? 'disabled' : '';
-            paginationHTML += `
-                    <li class="page-item ${prevDisabled}">
-                        <a class="page-link planning-page-btn" href="#" data-page="${currentPage - 1}" title="Previous">
-                            <i class="ri-arrow-left-line"></i>
-                        </a>
-                    </li>
-                `;
-
-            // First page button
-            if (currentPage > 3) {
-                paginationHTML += `
-            <li class="page-item">
-                <a class="page-link planning-page-btn" href="#" data-page="1">1</a>
-            </li>
-          `;
-
-                // Add ellipsis if there's a gap
-                if (currentPage > 4) {
-                    paginationHTML += `
-                <li class="page-item disabled">
-                    <span class="page-link">...</span>
-                </li>
-            `;
-                }
-            }
-
-            // Calculate range of pages to show around current page
-            const delta = 2; // Number of pages to show on each side of current page
-            const rangeStart = Math.max(1, currentPage - delta);
-            const rangeEnd = Math.min(totalPages, currentPage + delta);
-
-            // Page numbers around current page
-            for (let i = rangeStart; i <= rangeEnd; i++) {
-                const active = i === currentPage ? 'active' : '';
-                paginationHTML += `
-            <li class="page-item ${active}">
-                <a class="page-link planning-page-btn" href="#" data-page="${i}">${i}</a>
-            </li>
-           `;
-            }
-
-            // Last page button
-            if (currentPage < totalPages - 2) {
-                // Add ellipsis if there's a gap
-                if (currentPage < totalPages - 3) {
-                    paginationHTML += `
-                <li class="page-item disabled">
-                    <span class="page-link">...</span>
-                </li>
-            `;
-                }
-
-                paginationHTML += `
-            <li class="page-item">
-                <a class="page-link planning-page-btn" href="#" data-page="${totalPages}">${totalPages}</a>
-            </li>
-          `;
-            }
-
-            // Next button
-            const nextDisabled = currentPage === totalPages ? 'disabled' : '';
-            paginationHTML += `
-                    <li class="page-item ${nextDisabled}">
-                        <a class="page-link planning-page-btn" href="#" data-page="${currentPage + 1}" title="Next">
-                            <i class="ri-arrow-right-line"></i>
-                        </a>
-                    </li>
-                `;
-
-            wrapper.innerHTML = paginationHTML;
-
-
-        }
-
-        // Planning search and filter function
-        function filterPlannings() {
-            const keyword = $('#searchField').val().toLowerCase();
-
-            const filtered = STATE.data.plannings.filter(plan => {
-                return [
-                    plan.group,
-                    plan.kode_bagian,
-                    plan.kode_jabatan,
-                    plan.shift,
-                    plan.jumlah_karyawan?.toString()
-                ].some(field => (field || '').toLowerCase().includes(keyword));
-            });
-
-            STATE.data.filteredPlannings = filtered;
-            STATE.pagination.planning.current = 1;
-            renderPlanningTable();
-        }
-
-        // Load planning data function
-        async function loadPlanningData() {
-            try {
-                showLoading(true);
-
-                const {
-                    startDate,
-                    endDate,
-                    group
-                } = STATE.filters;
-
-                const params = new URLSearchParams({
-                    start_date: startDate,
-                    end_date: endDate,
-                    group: group !== 'SEMUA' ? group : ''
-                });
-
-                const response = await fetch(`/admin/api/plannings?${params}`);
-                if (!response.ok) {
-                    throw new Error(`Planning API failed: ${response.status}`);
-                }
-
-                const plannings = await response.json();
-                STATE.data.plannings = plannings;
-                STATE.data.filteredPlannings = plannings;
-
-                renderPlanningTable();
-
-            } catch (error) {
-                console.error('Error loading planning data:', error);
-                showErrorNotification('Gagal memuat data planning: ' + error.message);
-
-                // Render empty table on error
-                const tbody = document.querySelector('#ticket-list-data');
-                if (tbody) {
-                    tbody.innerHTML = '<tr><td colspan="10" class="text-center py-4 text-danger">Gagal memuat data planning</td></tr>';
-                }
-                renderPlanningPagination(0);
-            } finally {
-                showLoading(false);
-            }
-        }
-
-        // Enhanced event handlers for planning pagination
-        $(document).on('click', '.planning-page-btn', function(e) {
-            e.preventDefault();
-            const page = parseInt($(this).data('page'));
-            const maxPages = Math.ceil(STATE.data.filteredPlannings.length / STATE.pagination.planning.perPage);
-
-            if (page >= 1 && page <= maxPages) {
-                STATE.pagination.planning.current = page;
-                renderPlanningTable();
-
-                // Smooth scroll to top of planning table
-                $('html, body').animate({
-                    scrollTop: $("#ticketTable").offset().top - 100
-                }, 300);
-            }
-        });
-
-        // Handle planning items per page change
-        $(document).on('change', '#planningPerPageSelect', function() {
-            const newPerPage = parseInt($(this).val());
-            STATE.pagination.planning.perPage = newPerPage;
-            STATE.pagination.planning.current = 1; // Reset to first page
-            renderPlanningTable();
-        });
-
-        // Planning search with debounce
-        $('#searchField').on('input', debounce(filterPlannings, 300));
-
-        // Quick jump for planning pagination
-        function jumpToPlanningPage(pageNumber) {
-            const maxPages = Math.ceil(STATE.data.filteredPlannings.length / STATE.pagination.planning.perPage);
-
-            if (pageNumber >= 1 && pageNumber <= maxPages) {
-                STATE.pagination.planning.current = pageNumber;
-                renderPlanningTable();
-            }
-        }
-
-        // Add planning quick jump button handler
-        $(document).on('click', '.planning-quick-jump-btn', function() {
-            const maxPages = Math.ceil(STATE.data.filteredPlannings.length / STATE.pagination.planning.perPage);
-
-            Swal.fire({
-                title: 'Jump to Planning Page',
-                html: `<input type="number" id="jumpPlanningPageInput" class="swal2-input" placeholder="Enter page number" min="1" max="${maxPages}" value="${STATE.pagination.planning.current}">`,
-                showCancelButton: true,
-                confirmButtonText: 'Jump',
-                preConfirm: () => {
-                    const page = parseInt(document.getElementById('jumpPlanningPageInput').value);
-                    if (page < 1 || page > maxPages) {
-                        Swal.showValidationMessage(`Page must be between 1 and ${maxPages}`);
-                        return false;
-                    }
-                    return page;
-                }
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    jumpToPlanningPage(result.value);
-                }
-            });
-        });
-
-        // Enhanced keyboard navigation for planning
-        $(document).on('keydown', function(e) {
-            // Only handle shortcuts when not in input fields and when planning table is visible
-            if ($('input:focus, textarea:focus, select:focus').length > 0) {
-                return;
-            }
-
-            // Check if we're on planning tab/page
-            if (!$('#ticketTable').is(':visible')) {
-                return;
-            }
-
-            const currentPage = STATE.pagination.planning.current;
-            const maxPages = Math.ceil(STATE.data.filteredPlannings.length / STATE.pagination.planning.perPage);
-
-            // Alt + Arrow keys for planning pagination navigation (different from employee)
-            if (e.altKey) {
-                switch (e.key) {
-                    case 'ArrowLeft':
-                        e.preventDefault();
-                        if (currentPage > 1) {
-                            jumpToPlanningPage(currentPage - 1);
-                        }
-                        break;
-                    case 'ArrowRight':
-                        e.preventDefault();
-                        if (currentPage < maxPages) {
-                            jumpToPlanningPage(currentPage + 1);
-                        }
-                        break;
-                    case 'Home':
-                        e.preventDefault();
-                        jumpToPlanningPage(1);
-                        break;
-                    case 'End':
-                        e.preventDefault();
-                        jumpToPlanningPage(maxPages);
-                        break;
-                }
-            }
-        });
-
-        // Initialize planning table when document is ready
-        $(document).ready(function() {
-            // Load initial planning data if the table exists
-            if ($('#ticketTable').length) {
-                // Initialize with existing data from Laravel blade or load from API
-                const existingRows = $('#ticket-list-data tr').length;
-
-
-                // Parse existing data from HTML table if needed
-                const plannings = [];
-                $('#ticket-list-data tr').each(function() {
-                    const cells = $(this).find('td');
-                    if (cells.length >= 9) {
-                        plannings.push({
-                            id: cells.eq(0).text().trim(),
-                            group: cells.eq(1).text().trim(),
-                            kode_bagian: cells.eq(2).text().trim(),
-                            kode_jabatan: cells.eq(3).text().trim(),
-                            jumlah_karyawan: parseInt(cells.eq(4).text().trim()) || 0,
-                            shift: cells.eq(5).text().trim(),
-                            start_date: cells.eq(6).text().trim(),
-                            end_date: cells.eq(7).text().trim()
-                        });
-                    }
-                });
-
-                if (plannings.length > 0) {
-                    STATE.data.plannings = plannings;
-                    STATE.data.filteredPlannings = plannings;
-                    renderPlanningTable();
-                }
-
-            }
-        });
 
         // ===========================================
         // EMPLOYEE TABLE FUNCTIONS
