@@ -1235,9 +1235,10 @@
                     <td><span class="badge bg-${statusClass}">${emp.status || '-'}</span></td>
                     <td>
                         <div class="btn-group btn-group-sm">
-                            <button class="btn btn-info" onclick="location.href='/admin/employees/${emp.id}/detail'">
+                           <button class="btn btn-info" onclick="location.href='{{ url('/admin/employees') }}/${emp.id}/detail'">
                                 <i class="ri-eye-line"></i> Detail
                             </button>
+
                         </div>
                     </td>
                 </tr>
