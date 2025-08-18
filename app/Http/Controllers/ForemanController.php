@@ -43,7 +43,7 @@ class ForemanController extends Controller
         // Ambil planning yang end_date >= hari ini
         $plannings = Planning::with('plottingKehadiran.employee')
             ->where('group', $adminGroup)
-            ->whereRaw('end_date >= DATE_SUB(?, INTERVAL 1 DAY)', [$today])
+            //->whereRaw('end_date >= DATE_SUB(?, INTERVAL 1 DAY)', [$today])
             ->orderBy('start_date', 'desc')
             ->get();
         // Ambil employees hanya dari grup yang sesuai

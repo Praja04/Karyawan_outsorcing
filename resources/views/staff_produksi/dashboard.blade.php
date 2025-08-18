@@ -1152,7 +1152,7 @@
                     <span class="badge bg-${statusClass}">${statusText}</span>
                 </td>
                 <td>
-                    <a href="/planning/detail/${plan.id}" class="btn btn-info btn-sm">
+                    <a href="{{ route('foreman.plotting.show', $plan->id) }}" class="btn btn-info btn-sm">
                         <i class="ri-eye-line"></i> View
                     </a>
                 </td>
@@ -1441,16 +1441,14 @@
                 // Initialize with existing data from Laravel blade or load from API
                 const existingRows = $('#ticket-list-data tr').length;
 
-                if (existingRows <= 1) { // Only empty row or no rows
-                    loadPlanningData();
-                } else {
+                
                     // Parse existing data from HTML table if needed
                     const plannings = [];
                     $('#ticket-list-data tr').each(function() {
                         const cells = $(this).find('td');
                         if (cells.length >= 9) {
                             plannings.push({
-                                id: $(this).data('id') || Math.random(),
+                                id: cells.eq(0).text().trim(),
                                 group: cells.eq(1).text().trim(),
                                 kode_bagian: cells.eq(2).text().trim(),
                                 kode_jabatan: cells.eq(3).text().trim(),
@@ -1467,7 +1465,7 @@
                         STATE.data.filteredPlannings = plannings;
                         renderPlanningTable();
                     }
-                }
+                
             }
         });
 
