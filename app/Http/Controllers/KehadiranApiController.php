@@ -299,8 +299,8 @@ class KehadiranApiController extends Controller
         $summary = $plannings->map(function ($planning) {
             $totalPlanned = $planning->jumlah_karyawan;
 
-            $hadir = $planning->plottingKehadiran->where('status_konfirmasi', 'Hadir')->count();
-            $tidakHadir = $planning->plottingKehadiran->where('status_konfirmasi', 'Tidak Hadir')->count();
+            $hadir = $planning->plottingKehadiran->where('status_konfirmasi', 'hadir')->count();
+            $tidakHadir = $planning->plottingKehadiran->where('status_konfirmasi', 'tidak hadir')->count();
             $belumKonfirmasi = $planning->plottingKehadiran->whereNull('status_konfirmasi')->count();
 
             return [
