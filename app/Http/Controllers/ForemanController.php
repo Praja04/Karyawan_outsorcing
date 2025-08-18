@@ -42,10 +42,10 @@ class ForemanController extends Controller
 
         // Ambil planning yang end_date >= hari ini
         $plannings = Planning::with('plottingKehadiran.employee')
-        ->where('group', $adminGroup)
-        ->whereRaw('end_date >= DATE_SUB(?, INTERVAL 1 DAY)', [$today])
-            ->orderBy('start_date', 'desc')
-            ->get();
+        ->where('group', $adminGroup);
+        // ->whereRaw('end_date >= DATE_SUB(?, INTERVAL 1 DAY)', [$today])
+        //     ->orderBy('start_date', 'desc')
+        //     ->get();
         // Ambil employees hanya dari grup yang sesuai
         // $employees = Employee::where('grup', $adminGroup)->get();
         $employees = Employee::get();
@@ -309,7 +309,24 @@ class ForemanController extends Controller
     public function showPlotting($id)
     {
         $planning = Planning::with('plottingKehadiran.employee')->findOrFail($id);
+        // Hitung jumlah yang hadir dan tidak hadir
+        $jumlahHadir = $planning->plottingKehadiran()
+            ->where('status_konfirmasi', 'LIKE', 'HADIR%')
+            ->count();
 
-        return view('staff_produksi.plotting_view', compact('planning'));
+        $jumlahTidakHadir = $planning->plottingKehadiran()
+            ->where('status_konfirmasi', 'LIKE', 'TIDAK HADIR%')
+            ->count();
+        $jumlahBelumKonfirmasi = $planning->plottingKehadiran()
+            ->where('status_konfirmasi', NULL)
+            ->count();
+
+        return view('staff_produksi.plotting_view', compact(
+            'planning',
+            'jumlahHadir',
+            'jumlahTidakHadir',
+            'jumlahBelumKonfirmasi'
+        ));
+
     }
 }

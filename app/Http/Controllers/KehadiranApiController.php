@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Employee;
 use App\Models\PlottingKehadiran;
-use Carbon\Carbon;
+use App\Models\Planning;
+use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 
@@ -273,4 +274,64 @@ class KehadiranApiController extends Controller
 
         return response()->json(['status' => 'Polling selesai']);
     }
+
+    public function attendanceSummary(Request $request)
+    {
+        $start = $request->input('start_date')
+        ? Carbon::parse($request->input('start_date'))
+        : Carbon::now()->subDays(7);
+
+        $end = $request->input('end_date')
+        ? Carbon::parse($request->input('end_date'))
+        : Carbon::now()->addDays(3);
+
+        $groupFilter = strtoupper($request->input('group', 'SEMUA'));
+
+        $query = Planning::with('plottingKehadiran')
+        ->whereBetween('start_date', [$start, $end]);
+
+        if (in_array($groupFilter, ['GRUP A', 'GRUP B', 'GRUP C', 'GRUP N'])) {
+            $query->where('group', $groupFilter);
+        }
+
+        $plannings = $query->get();
+
+        $summary = $plannings->map(function ($planning) {
+            $totalPlanned = $planning->jumlah_karyawan;
+
+            $hadir = $planning->plottingKehadiran->where('status_konfirmasi', 'Hadir')->count();
+            $tidakHadir = $planning->plottingKehadiran->where('status_konfirmasi', 'Tidak Hadir')->count();
+            $belumKonfirmasi = $planning->plottingKehadiran->whereNull('status_konfirmasi')->count();
+
+            return [
+                'planning_id' => $planning->id,
+                'group' => $planning->group,
+                'shift' => $planning->shift,
+                'start_date' => $planning->start_date->format('Y-m-d'),
+                'end_date' => $planning->end_date->format('Y-m-d'),
+                'jumlah_karyawan' => $totalPlanned,
+                'hadir' => $hadir,
+                'tidak_hadir' => $tidakHadir,
+                'belum_konfirmasi' => $belumKonfirmasi,
+            ];
+        });
+
+        $grouped = $summary->groupBy('group');
+
+        // Respons data
+        $responseData = $groupFilter === 'SEMUA'
+            ? $grouped
+            : [$groupFilter => $grouped->get($groupFilter, collect())];
+
+        return response()->json([
+            'status' => 'success',
+            'filter_range' => [
+                'start_date' => $start->format('Y-m-d'),
+                'end_date' => $end->format('Y-m-d'),
+            ],
+            'group_filter' => $groupFilter,
+            'data' => $responseData
+        ]);
+    }
+
 }

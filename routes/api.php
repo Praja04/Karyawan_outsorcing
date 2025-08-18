@@ -14,6 +14,7 @@ use App\Http\Controllers\KehadiranApiController;
 |
 */
 
+Route::get('/attendance-summary', [KehadiranApiController::class, 'attendanceSummary']);
 Route::get('/konfirmasi-kehadiran', [KehadiranApiController::class, 'konfirmasi']);
 // Route::post('/konfirmasi-kehadiran', [KehadiranApiController::class, 'konfirmasi']);
 Route::get('/get_data/telegram', [KehadiranApiController::class, 'polling']);
