@@ -563,15 +563,15 @@
         function loadSummaryKehadiranBulanan(startMonth = null, endMonth = null) {
             // tampilkan spinner di semua group
             ['A', 'B', 'C', 'N'].forEach(group => {
-                $("#kehadiranbulanan" + group).show();
-                $("#summarybulanan" + group).html(`
-                <div class="d-flex justify-content-center align-items-center h-100">
-                    <div class="text-center">
-                        <div class="spinner-border text-success mb-2"></div>
-                        <p class="text-muted">Loading attendance chart...</p>
-                    </div>
+                $("#kehadiranbulanan" + group).fadeIn(150);
+                $("#summarybulanan" + group).fadeTo(150, 0.3).html(`
+            <div class="d-flex justify-content-center align-items-center h-100">
+                <div class="text-center">
+                    <div class="spinner-border text-success mb-2"></div>
+                    <p class="text-muted">Loading attendance chart...</p>
                 </div>
-            `);
+            </div>
+        `);
             });
 
             // parsing bulan ke format API
@@ -590,7 +590,7 @@
             }
 
             $.ajax({
-                url: "{{url('/api/attendance-summary-monthly')}}",
+                url: "{{ url('/api/attendance-summary-monthly') }}",
                 type: "GET",
                 data: {
                     start_month: start_month_num,
@@ -618,14 +618,32 @@
                                 belumKonfirmasi.push(groupData[month].belum_konfirmasi);
                             });
 
-                            $("#kehadiranbulanan" + shortGroup).hide();
-                            $("#summarybulanan" + shortGroup).html("");
+                            // clear chart lama biar nggak numpuk
+                            if (window["chart_" + shortGroup]) {
+                                window["chart_" + shortGroup].destroy();
+                            }
+
+                            $("#kehadiranbulanan" + shortGroup).fadeOut(200);
+                            $("#summarybulanan" + shortGroup).fadeTo(200, 1).html("");
 
                             var options = {
                                 chart: {
                                     type: 'bar',
                                     height: 300,
-                                    stacked: true
+                                    stacked: true,
+                                    animations: {
+                                        enabled: true,
+                                        easing: 'easeinout',
+                                        speed: 800,
+                                        animateGradually: {
+                                            enabled: true,
+                                            delay: 150
+                                        },
+                                        dynamicAnimation: {
+                                            enabled: true,
+                                            speed: 400
+                                        }
+                                    }
                                 },
                                 series: [{
                                         name: "Hadir",
@@ -650,16 +668,29 @@
                                 plotOptions: {
                                     bar: {
                                         horizontal: false,
-                                        borderRadius: 5
+                                        borderRadius: 6,
+                                        columnWidth: '50%'
                                     }
                                 },
                                 dataLabels: {
-                                    enabled: true
+                                    enabled: true,
+                                    style: {
+                                        fontSize: '12px',
+                                        fontWeight: 'bold'
+                                    }
+                                },
+                                tooltip: {
+                                    shared: true,
+                                    intersect: false
                                 }
                             };
 
-                            var chart = new ApexCharts(document.querySelector("#summarybulanan" + shortGroup), options);
-                            chart.render();
+                            // simpan chart ke global biar bisa destroy pas reload
+                            window["chart_" + shortGroup] = new ApexCharts(
+                                document.querySelector("#summarybulanan" + shortGroup),
+                                options
+                            );
+                            window["chart_" + shortGroup].render();
                         });
                     }
                 },
@@ -686,6 +717,7 @@
             $("#endMonth").val("");
             loadSummaryKehadiranBulanan();
         });
+
     });
 </script>
 <script>
