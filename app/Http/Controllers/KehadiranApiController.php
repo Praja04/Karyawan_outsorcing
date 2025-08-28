@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use Carbon\CarbonPeriod;
 
 class KehadiranApiController extends Controller
 {
@@ -333,5 +334,99 @@ class KehadiranApiController extends Controller
             'data' => $responseData
         ]);
     }
+
+
+    public function attendanceSummaryByMonthRange(Request $request)
+    {
+        $now = Carbon::now();
+        $startMonth = $request->input('start_month', $now->copy()->subMonths(5)->format('m'));
+        $startYear = $request->input('start_year', $now->year);
+        $endMonth = $request->input('end_month', $now->format('m'));
+        $endYear = $request->input('end_year', $now->year);
+
+        $start = Carbon::createFromDate($startYear, $startMonth, 1)->startOfMonth();
+        $end = Carbon::createFromDate($endYear, $endMonth, 1)->endOfMonth();
+
+        $groupFilter = strtoupper($request->input('group', 'SEMUA'));
+
+        $query = Planning::with('plottingKehadiran')
+        ->whereBetween('start_date', [$start, $end]);
+
+        if (in_array($groupFilter, ['GRUP A', 'GRUP B', 'GRUP C', 'GRUP N'])) {
+            $query->where('group', $groupFilter);
+        }
+
+        $plannings = $query->get();
+
+        $summary = $plannings->map(function ($planning) {
+            $totalPlanned = $planning->jumlah_karyawan;
+
+            $hadir = $planning->plottingKehadiran->where('status_konfirmasi', 'hadir')->count();
+            $tidakHadir = $planning->plottingKehadiran->where('status_konfirmasi', 'tidak hadir')->count();
+            $belumKonfirmasi = $planning->plottingKehadiran->whereNull('status_konfirmasi')->count();
+
+            return [
+                'planning_id' => $planning->id,
+                'group' => strtoupper($planning->group),
+                'month' => $planning->start_date->format('Y-m'),
+                'jumlah_karyawan' => $totalPlanned,
+                'hadir' => $hadir,
+                'tidak_hadir' => $tidakHadir,
+                'belum_konfirmasi' => $belumKonfirmasi,
+            ];
+        });
+
+        // Grouping by group and month
+        $grouped = $summary->groupBy('group')->map(function ($items) {
+            return $items->groupBy('month')->map(function ($rows) {
+                return [
+                    'jumlah_karyawan' => $rows->sum('jumlah_karyawan'),
+                    'hadir' => $rows->sum('hadir'),
+                    'tidak_hadir' => $rows->sum('tidak_hadir'),
+                    'belum_konfirmasi' => $rows->sum('belum_konfirmasi'),
+                ];
+            });
+        });
+
+        // ==== Inject template kosong biar semua grup dan bulan muncul ====
+        $allGroups = ['GRUP A', 'GRUP B', 'GRUP C', 'GRUP N'];
+        $months = [];
+        $period = CarbonPeriod::create($start, '1 month', $end);
+        foreach ($period as $month) {
+            $months[] = $month->format('Y-m');
+        }
+
+        $finalData = [];
+        foreach ($allGroups as $g) {
+            foreach ($months as $m) {
+                $finalData[$g][$m] = $grouped[$g][$m] ?? [
+                    'jumlah_karyawan' => 0,
+                    'hadir' => 0,
+                    'tidak_hadir' => 0,
+                    'belum_konfirmasi' => 0,
+                ];
+            }
+        }
+
+        // Respons data
+        $responseData = $groupFilter === 'SEMUA'
+        ? $finalData
+            : [$groupFilter => $finalData[$groupFilter] ?? []];
+
+        return response()->json([
+            'status' => 'success',
+            'filter_range' => [
+                'start_date' => $start->format('Y-m-d'),
+                'end_date' => $end->format('Y-m-d'),
+                'start_month' => $startMonth,
+                'start_year' => $startYear,
+                'end_month' => $endMonth,
+                'end_year' => $endYear,
+            ],
+            'group_filter' => $groupFilter,
+            'data' => $responseData
+        ]);
+    }
+
 
 }

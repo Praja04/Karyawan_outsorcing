@@ -212,6 +212,63 @@
                         @endforeach
                     </div>
 
+                    <div class="position-relative my-4 text-center">
+                        <hr class="border-2 border-info opacity-50">
+                        <span class="position-absolute top-50 start-50 translate-middle px-3 bg-body fw-semibold text-info">
+                            <i class="bx bx-bar-chart-alt-2 me-1"></i> Summary Kehadiran Bulanan
+                        </span>
+
+                    </div>
+                    <div class="card mb-4">
+                        <div class="card-header bg-info text-white fw-bold">
+                            <i class="bx bx-filter-alt me-1"></i> Filter Summary Kehadiran Bulanan
+                        </div>
+                        <div class="card-body">
+                            <form id="filterForm" class="row g-3 align-items-end">
+                                <div class="col-md-3">
+                                    <label class="form-label">Dari Bulan</label>
+                                    <input type="month" class="form-control" id="startMonth" name="start_month">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Sampai Bulan</label>
+                                    <input type="month" class="form-control" id="endMonth" name="end_month">
+                                </div>
+                                <div class="col-md-3">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="bx bx-search-alt me-1"></i> Tampilkan
+                                    </button>
+                                    <button type="button" class="btn btn-secondary" id="resetFilter">
+                                        <i class="bx bx-reset me-1"></i> Reset
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    <div class="row">
+                        @foreach (['A', 'B', 'C', 'N'] as $group)
+                        <div class="col-xl-6 mb-4">
+                            <div class="card border-success">
+                                <div class="card-header bg-success text-white d-flex align-items-center">
+                                    <h4 class="card-title mb-0 flex-grow-1">Summary Kehadiran Bulanan - Group {{ $group }}</h4>
+                                    <div class="chart-loading" id="kehadiranbulanan{{ $group }}" style="display: none;">
+                                        <div class="spinner-border spinner-border-sm text-white"></div>
+                                    </div>
+                                </div>
+                                <div class="card-body p-0 pb-2">
+                                    <div id="summarybulanan{{ $group }}" class="w-100 px-3 py-2" style="min-height: 300px;">
+                                        <div class="d-flex justify-content-center align-items-center h-100">
+                                            <div class="text-center">
+                                                <div class="spinner-border text-success mb-2"></div>
+                                                <p class="text-muted">Loading attendance chart...</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        @endforeach
+                    </div>
+
                     <!-- Planning Data Table -->
                     <div class="row">
                         <div class="col-lg-12">
@@ -488,6 +545,133 @@
 
         // Render awal
         renderTable();
+
+        function loadSummaryKehadiranBulanan(startMonth = null, endMonth = null) {
+            // tampilkan spinner di semua group
+            ['A', 'B', 'C', 'N'].forEach(group => {
+                $("#kehadiranbulanan" + group).show();
+                $("#summarybulanan" + group).html(`
+                <div class="d-flex justify-content-center align-items-center h-100">
+                    <div class="text-center">
+                        <div class="spinner-border text-success mb-2"></div>
+                        <p class="text-muted">Loading attendance chart...</p>
+                    </div>
+                </div>
+            `);
+            });
+
+            // parsing bulan ke format API
+            let start_year = null,
+                end_year = null,
+                start_month_num = null,
+                end_month_num = null;
+
+            if (startMonth) {
+                start_year = startMonth.split("-")[0];
+                start_month_num = startMonth.split("-")[1];
+            }
+            if (endMonth) {
+                end_year = endMonth.split("-")[0];
+                end_month_num = endMonth.split("-")[1];
+            }
+
+            $.ajax({
+                url: "{{url('/api/attendance-summary-monthly')}}",
+                type: "GET",
+                data: {
+                    start_month: start_month_num,
+                    start_year: start_year,
+                    end_month: end_month_num,
+                    end_year: end_year,
+                    group: "SEMUA"
+                },
+                success: function(res) {
+                    if (res.status === "success") {
+                        let data = res.data;
+
+                        Object.keys(data).forEach(groupName => {
+                            let shortGroup = groupName.replace("GRUP ", "");
+                            let groupData = data[groupName];
+
+                            let categories = Object.keys(groupData);
+                            let hadir = [],
+                                tidakHadir = [],
+                                belumKonfirmasi = [];
+
+                            categories.forEach(month => {
+                                hadir.push(groupData[month].hadir);
+                                tidakHadir.push(groupData[month].tidak_hadir);
+                                belumKonfirmasi.push(groupData[month].belum_konfirmasi);
+                            });
+
+                            $("#kehadiranbulanan" + shortGroup).hide();
+                            $("#summarybulanan" + shortGroup).html("");
+
+                            var options = {
+                                chart: {
+                                    type: 'bar',
+                                    height: 300,
+                                    stacked: true
+                                },
+                                series: [{
+                                        name: "Hadir",
+                                        data: hadir
+                                    },
+                                    {
+                                        name: "Tidak Hadir",
+                                        data: tidakHadir
+                                    },
+                                    {
+                                        name: "Belum Konfirmasi",
+                                        data: belumKonfirmasi
+                                    }
+                                ],
+                                xaxis: {
+                                    categories: categories
+                                },
+                                colors: ['#198754', '#dc3545', '#ffc107'],
+                                legend: {
+                                    position: 'top'
+                                },
+                                plotOptions: {
+                                    bar: {
+                                        horizontal: false,
+                                        borderRadius: 5
+                                    }
+                                },
+                                dataLabels: {
+                                    enabled: true
+                                }
+                            };
+
+                            var chart = new ApexCharts(document.querySelector("#summarybulanan" + shortGroup), options);
+                            chart.render();
+                        });
+                    }
+                },
+                error: function(xhr) {
+                    console.error(xhr.responseText);
+                }
+            });
+        }
+
+        // default 6 bulan kebelakang
+        loadSummaryKehadiranBulanan();
+
+        // submit filter
+        $("#filterForm").on("submit", function(e) {
+            e.preventDefault();
+            let startMonth = $("#startMonth").val();
+            let endMonth = $("#endMonth").val();
+            loadSummaryKehadiranBulanan(startMonth, endMonth);
+        });
+
+        // reset filter
+        $("#resetFilter").on("click", function() {
+            $("#startMonth").val("");
+            $("#endMonth").val("");
+            loadSummaryKehadiranBulanan();
+        });
     });
 </script>
 <script>
