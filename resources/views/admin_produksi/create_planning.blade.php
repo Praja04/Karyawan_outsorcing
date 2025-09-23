@@ -93,9 +93,13 @@
                                     <label for="kode_bagian" class="form-label">Kode Bagian</label>
                                     <select name="kode_bagian" class="form-control" required>
                                         <option value="">-- Pilih Kode Bagian --</option>
-                                        @foreach ($kodeBagians as $bagian)
+                                        <option value="Proses">Proses</option>
+                                        <option value="Retail">Retail</option>
+                                        <option value="Palletizing">Palletizing</option>
+                                        <option value="Helper RM">Helper RM</option>
+                                        <!-- @foreach ($kodeBagians as $bagian)
                                         <option value="{{ $bagian }}" {{ old('kode_bagian') == $bagian ? 'selected' : '' }}>{{ $bagian }}</option>
-                                        @endforeach
+                                        @endforeach -->
                                     </select>
                                 </div>
 
@@ -103,9 +107,10 @@
                                     <label for="kode_jabatan" class="form-label">Kode Jabatan</label>
                                     <select name="kode_jabatan" class="form-control" required>
                                         <option value="">-- Pilih Kode Jabatan --</option>
-                                        @foreach ($kodeJabatans as $jabatan)
+                                        <option value="Helper Produksi">Helper Produksi</option>
+                                        <!-- @foreach ($kodeJabatans as $jabatan)
                                         <option value="{{ $jabatan }}" {{ old('kode_jabatan') == $jabatan ? 'selected' : '' }}>{{ $jabatan }}</option>
-                                        @endforeach
+                                        @endforeach -->
                                     </select>
                                 </div>
 

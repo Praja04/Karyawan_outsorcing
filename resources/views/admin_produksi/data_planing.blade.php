@@ -134,7 +134,10 @@
                                     @endforelse
                                 </tbody>
                             </table>
-                            <ul class="pagination listjs-pagination mb-0" id="planningPagination"></ul>
+                            <div class="text-center mt-3">
+                                <ul class="pagination listjs-pagination mb-0" id="planningPagination"></ul>
+                            </div>
+
                             <div class="noresult" style="display: none">
                                 <div class="text-center">
                                     <lord-icon src="https://cdn.lordicon.com/msoeawqm.json" trigger="loop" colors="primary:#121331,secondary:#08a88a" style="width:75px;height:75px">
@@ -424,25 +427,36 @@
 
             let buttons = [];
 
+            // Tombol Previous
             buttons.push(`
-                <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
-                    <a class="page-link page-btn" href="#" data-page="${currentPage - 1}">Previous</a>
-                </li>
-            `);
+            <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                <a class="page-link page-btn" href="#" data-page="${currentPage - 1}">Previous</a>
+            </li>
+        `);
 
-            for (let i = 1; i <= totalPages; i++) {
-                buttons.push(`
-                    <li class="page-item ${i === currentPage ? 'active' : ''}">
-                        <a class="page-link page-btn" href="#" data-page="${i}">${i}</a>
-                    </li>
-                `);
+            // Hitung range halaman yang ditampilkan
+            const visiblePages = 5;
+            let startPage = Math.max(1, currentPage - Math.floor(visiblePages / 2));
+            let endPage = Math.min(totalPages, startPage + visiblePages - 1);
+            if (endPage - startPage + 1 < visiblePages) {
+                startPage = Math.max(1, endPage - visiblePages + 1);
             }
 
-            buttons.push(`
-                <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
-                    <a class="page-link page-btn" href="#" data-page="${currentPage + 1}">Next</a>
+            // Tombol halaman
+            for (let i = startPage; i <= endPage; i++) {
+                buttons.push(`
+                <li class="page-item ${i === currentPage ? 'active' : ''}">
+                    <a class="page-link page-btn" href="#" data-page="${i}">${i}</a>
                 </li>
             `);
+            }
+
+            // Tombol Next
+            buttons.push(`
+            <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+                <a class="page-link page-btn" href="#" data-page="${currentPage + 1}">Next</a>
+            </li>
+        `);
 
             $pagination.html(buttons.join(''));
 
